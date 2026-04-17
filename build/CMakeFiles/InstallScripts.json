@@ -1,0 +1,14 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Window/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Input/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Logic/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/game/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

@@ -1,0 +1,78 @@
+{
+	"abstract" : true,
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries"
+		],
+		"files" : 
+		[
+			"core/Graphics/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 5,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 7,
+				"parent" : 0
+			}
+		]
+	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 9
+	},
+	"id" : "graphics::@f77c298895aae6dc9943",
+	"interfaceCompileDependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "OpenGL::GL::@f77c298895aae6dc9943"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "GLEW::GLEW::@f77c298895aae6dc9943"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "glfw::@f77c298895aae6dc9943"
+		}
+	],
+	"interfaceLinkLibraries" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "OpenGL::GL::@f77c298895aae6dc9943"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "GLEW::GLEW::@f77c298895aae6dc9943"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "glfw::@f77c298895aae6dc9943"
+		}
+	],
+	"name" : "graphics",
+	"paths" : 
+	{
+		"build" : "core/Graphics",
+		"source" : "core/Graphics"
+	},
+	"sources" : [],
+	"type" : "INTERFACE_LIBRARY"
+}

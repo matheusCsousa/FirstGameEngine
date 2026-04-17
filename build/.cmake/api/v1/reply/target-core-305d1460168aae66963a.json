@@ -1,0 +1,94 @@
+{
+	"abstract" : true,
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries"
+		],
+		"files" : 
+		[
+			"core/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 7,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 9,
+				"parent" : 0
+			}
+		]
+	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 9
+	},
+	"id" : "core::@57760688d1f824db5d9c",
+	"interfaceCompileDependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "window::@0bf90d74aef8db95f6b7"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "input::@941c823b910a1bb1ec81"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "graphics::@f77c298895aae6dc9943"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "game::@af0136f7f8bca7318a48"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "logic::@c4c8ae37685268088fa9"
+		}
+	],
+	"interfaceLinkLibraries" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "window::@0bf90d74aef8db95f6b7"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "input::@941c823b910a1bb1ec81"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "graphics::@f77c298895aae6dc9943"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "game::@af0136f7f8bca7318a48"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "logic::@c4c8ae37685268088fa9"
+		}
+	],
+	"name" : "core",
+	"paths" : 
+	{
+		"build" : "core",
+		"source" : "core"
+	},
+	"sources" : [],
+	"type" : "INTERFACE_LIBRARY"
+}
