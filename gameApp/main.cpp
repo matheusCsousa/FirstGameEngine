@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "../core/Game/Game.hpp"
 #include "GameLogic.hpp"
 
@@ -12,6 +10,4 @@ int main() {
     Core::Game game(gameSpecs);
     game.pushLogic<GameLogic>();
     game.run();
-
-    std::cout << gameSpecs.title << " is running..." << std::endl;
 }

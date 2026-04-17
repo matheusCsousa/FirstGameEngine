@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 
 #include "../Window/Window.hpp"
+#include "../Input/Input.hpp"
 
 namespace Core {
 
@@ -10,6 +11,7 @@ namespace Core {
         : m_specs(specs) {
             m_window = std::make_unique<Core::Window>(m_specs.windowSpec);
             m_window->create();
+            Core::Input::initialize(m_window->getWindow());
         }
 
     Game::~Game() {
@@ -24,7 +26,5 @@ namespace Core {
             m_logic->onRender();
             m_window->update();
         }
-
     }
-
 }
