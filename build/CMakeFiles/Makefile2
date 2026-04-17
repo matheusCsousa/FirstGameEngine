@@ -64,22 +64,22 @@ CMAKE_BINARY_DIR = /home/nubsdre/Documents/codes/projects/game_engine/build
 
 # The main recursive "all" target.
 all: core/all
-all: game/all
+all: gameApp/all
 .PHONY : all
 
 # The main recursive "codegen" target.
 codegen: core/codegen
-codegen: game/codegen
+codegen: gameApp/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
 preinstall: core/preinstall
-preinstall: game/preinstall
+preinstall: gameApp/preinstall
 .PHONY : preinstall
 
 # The main recursive "clean" target.
 clean: core/clean
-clean: game/clean
+clean: gameApp/clean
 .PHONY : clean
 
 #=============================================================================
@@ -90,7 +90,6 @@ core/all: core/Window/all
 core/all: core/Input/all
 core/all: core/Graphics/all
 core/all: core/Game/all
-core/all: core/Logic/all
 .PHONY : core/all
 
 # Recursive "codegen" directory target.
@@ -98,7 +97,6 @@ core/codegen: core/Window/codegen
 core/codegen: core/Input/codegen
 core/codegen: core/Graphics/codegen
 core/codegen: core/Game/codegen
-core/codegen: core/Logic/codegen
 .PHONY : core/codegen
 
 # Recursive "preinstall" directory target.
@@ -106,7 +104,6 @@ core/preinstall: core/Window/preinstall
 core/preinstall: core/Input/preinstall
 core/preinstall: core/Graphics/preinstall
 core/preinstall: core/Game/preinstall
-core/preinstall: core/Logic/preinstall
 .PHONY : core/preinstall
 
 # Recursive "clean" directory target.
@@ -114,7 +111,6 @@ core/clean: core/Window/clean
 core/clean: core/Input/clean
 core/clean: core/Graphics/clean
 core/clean: core/Game/clean
-core/clean: core/Logic/clean
 .PHONY : core/clean
 
 #=============================================================================
@@ -175,25 +171,6 @@ core/Input/clean: core/Input/CMakeFiles/input.dir/clean
 .PHONY : core/Input/clean
 
 #=============================================================================
-# Directory level rules for directory core/Logic
-
-# Recursive "all" directory target.
-core/Logic/all: core/Logic/CMakeFiles/logic.dir/all
-.PHONY : core/Logic/all
-
-# Recursive "codegen" directory target.
-core/Logic/codegen: core/Logic/CMakeFiles/logic.dir/codegen
-.PHONY : core/Logic/codegen
-
-# Recursive "preinstall" directory target.
-core/Logic/preinstall:
-.PHONY : core/Logic/preinstall
-
-# Recursive "clean" directory target.
-core/Logic/clean: core/Logic/CMakeFiles/logic.dir/clean
-.PHONY : core/Logic/clean
-
-#=============================================================================
 # Directory level rules for directory core/Window
 
 # Recursive "all" directory target.
@@ -213,23 +190,23 @@ core/Window/clean: core/Window/CMakeFiles/window.dir/clean
 .PHONY : core/Window/clean
 
 #=============================================================================
-# Directory level rules for directory game
+# Directory level rules for directory gameApp
 
 # Recursive "all" directory target.
-game/all: game/CMakeFiles/fersa.dir/all
-.PHONY : game/all
+gameApp/all: gameApp/CMakeFiles/fersa.dir/all
+.PHONY : gameApp/all
 
 # Recursive "codegen" directory target.
-game/codegen: game/CMakeFiles/fersa.dir/codegen
-.PHONY : game/codegen
+gameApp/codegen: gameApp/CMakeFiles/fersa.dir/codegen
+.PHONY : gameApp/codegen
 
 # Recursive "preinstall" directory target.
-game/preinstall:
-.PHONY : game/preinstall
+gameApp/preinstall:
+.PHONY : gameApp/preinstall
 
 # Recursive "clean" directory target.
-game/clean: game/CMakeFiles/fersa.dir/clean
-.PHONY : game/clean
+gameApp/clean: gameApp/CMakeFiles/fersa.dir/clean
+.PHONY : gameApp/clean
 
 #=============================================================================
 # Target rules for target core/Window/CMakeFiles/window.dir
@@ -238,7 +215,7 @@ game/clean: game/CMakeFiles/fersa.dir/clean
 core/Window/CMakeFiles/window.dir/all:
 	$(MAKE) $(MAKESILENT) -f core/Window/CMakeFiles/window.dir/build.make core/Window/CMakeFiles/window.dir/depend
 	$(MAKE) $(MAKESILENT) -f core/Window/CMakeFiles/window.dir/build.make core/Window/CMakeFiles/window.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=10,11 "Built target window"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Built target window"
 .PHONY : core/Window/CMakeFiles/window.dir/all
 
 # Build rule for subdir invocation for target.
@@ -255,7 +232,7 @@ window: core/Window/CMakeFiles/window.dir/rule
 # codegen rule for target.
 core/Window/CMakeFiles/window.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f core/Window/CMakeFiles/window.dir/build.make core/Window/CMakeFiles/window.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=10,11 "Finished codegen for target window"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Finished codegen for target window"
 .PHONY : core/Window/CMakeFiles/window.dir/codegen
 
 # clean rule for target.
@@ -299,7 +276,8 @@ core/Input/CMakeFiles/input.dir/clean:
 # Target rules for target core/Game/CMakeFiles/game.dir
 
 # All Build rule for target.
-core/Game/CMakeFiles/game.dir/all:
+core/Game/CMakeFiles/game.dir/all: core/Window/CMakeFiles/window.dir/all
+core/Game/CMakeFiles/game.dir/all: core/Input/CMakeFiles/input.dir/all
 	$(MAKE) $(MAKESILENT) -f core/Game/CMakeFiles/game.dir/build.make core/Game/CMakeFiles/game.dir/depend
 	$(MAKE) $(MAKESILENT) -f core/Game/CMakeFiles/game.dir/build.make core/Game/CMakeFiles/game.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=4,5 "Built target game"
@@ -307,7 +285,7 @@ core/Game/CMakeFiles/game.dir/all:
 
 # Build rule for subdir invocation for target.
 core/Game/CMakeFiles/game.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 6
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core/Game/CMakeFiles/game.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
 .PHONY : core/Game/CMakeFiles/game.dir/rule
@@ -328,71 +306,38 @@ core/Game/CMakeFiles/game.dir/clean:
 .PHONY : core/Game/CMakeFiles/game.dir/clean
 
 #=============================================================================
-# Target rules for target core/Logic/CMakeFiles/logic.dir
+# Target rules for target gameApp/CMakeFiles/fersa.dir
 
 # All Build rule for target.
-core/Logic/CMakeFiles/logic.dir/all:
-	$(MAKE) $(MAKESILENT) -f core/Logic/CMakeFiles/logic.dir/build.make core/Logic/CMakeFiles/logic.dir/depend
-	$(MAKE) $(MAKESILENT) -f core/Logic/CMakeFiles/logic.dir/build.make core/Logic/CMakeFiles/logic.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Built target logic"
-.PHONY : core/Logic/CMakeFiles/logic.dir/all
-
-# Build rule for subdir invocation for target.
-core/Logic/CMakeFiles/logic.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core/Logic/CMakeFiles/logic.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
-.PHONY : core/Logic/CMakeFiles/logic.dir/rule
-
-# Convenience name for target.
-logic: core/Logic/CMakeFiles/logic.dir/rule
-.PHONY : logic
-
-# codegen rule for target.
-core/Logic/CMakeFiles/logic.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f core/Logic/CMakeFiles/logic.dir/build.make core/Logic/CMakeFiles/logic.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Finished codegen for target logic"
-.PHONY : core/Logic/CMakeFiles/logic.dir/codegen
-
-# clean rule for target.
-core/Logic/CMakeFiles/logic.dir/clean:
-	$(MAKE) $(MAKESILENT) -f core/Logic/CMakeFiles/logic.dir/build.make core/Logic/CMakeFiles/logic.dir/clean
-.PHONY : core/Logic/CMakeFiles/logic.dir/clean
-
-#=============================================================================
-# Target rules for target game/CMakeFiles/fersa.dir
-
-# All Build rule for target.
-game/CMakeFiles/fersa.dir/all: core/Window/CMakeFiles/window.dir/all
-game/CMakeFiles/fersa.dir/all: core/Input/CMakeFiles/input.dir/all
-game/CMakeFiles/fersa.dir/all: core/Game/CMakeFiles/game.dir/all
-game/CMakeFiles/fersa.dir/all: core/Logic/CMakeFiles/logic.dir/all
-	$(MAKE) $(MAKESILENT) -f game/CMakeFiles/fersa.dir/build.make game/CMakeFiles/fersa.dir/depend
-	$(MAKE) $(MAKESILENT) -f game/CMakeFiles/fersa.dir/build.make game/CMakeFiles/fersa.dir/build
+gameApp/CMakeFiles/fersa.dir/all: core/Window/CMakeFiles/window.dir/all
+gameApp/CMakeFiles/fersa.dir/all: core/Input/CMakeFiles/input.dir/all
+gameApp/CMakeFiles/fersa.dir/all: core/Game/CMakeFiles/game.dir/all
+	$(MAKE) $(MAKESILENT) -f gameApp/CMakeFiles/fersa.dir/build.make gameApp/CMakeFiles/fersa.dir/depend
+	$(MAKE) $(MAKESILENT) -f gameApp/CMakeFiles/fersa.dir/build.make gameApp/CMakeFiles/fersa.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=1,2,3 "Built target fersa"
-.PHONY : game/CMakeFiles/fersa.dir/all
+.PHONY : gameApp/CMakeFiles/fersa.dir/all
 
 # Build rule for subdir invocation for target.
-game/CMakeFiles/fersa.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 11
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 game/CMakeFiles/fersa.dir/all
+gameApp/CMakeFiles/fersa.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 9
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gameApp/CMakeFiles/fersa.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
-.PHONY : game/CMakeFiles/fersa.dir/rule
+.PHONY : gameApp/CMakeFiles/fersa.dir/rule
 
 # Convenience name for target.
-fersa: game/CMakeFiles/fersa.dir/rule
+fersa: gameApp/CMakeFiles/fersa.dir/rule
 .PHONY : fersa
 
 # codegen rule for target.
-game/CMakeFiles/fersa.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f game/CMakeFiles/fersa.dir/build.make game/CMakeFiles/fersa.dir/codegen
+gameApp/CMakeFiles/fersa.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f gameApp/CMakeFiles/fersa.dir/build.make gameApp/CMakeFiles/fersa.dir/codegen
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=1,2,3 "Finished codegen for target fersa"
-.PHONY : game/CMakeFiles/fersa.dir/codegen
+.PHONY : gameApp/CMakeFiles/fersa.dir/codegen
 
 # clean rule for target.
-game/CMakeFiles/fersa.dir/clean:
-	$(MAKE) $(MAKESILENT) -f game/CMakeFiles/fersa.dir/build.make game/CMakeFiles/fersa.dir/clean
-.PHONY : game/CMakeFiles/fersa.dir/clean
+gameApp/CMakeFiles/fersa.dir/clean:
+	$(MAKE) $(MAKESILENT) -f gameApp/CMakeFiles/fersa.dir/build.make gameApp/CMakeFiles/fersa.dir/clean
+.PHONY : gameApp/CMakeFiles/fersa.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

@@ -14,9 +14,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Game/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Input/CMakeLists.txt"
-  "/home/nubsdre/Documents/codes/projects/game_engine/core/Logic/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Window/CMakeLists.txt"
-  "/home/nubsdre/Documents/codes/projects/game_engine/game/CMakeLists.txt"
+  "/home/nubsdre/Documents/codes/projects/game_engine/gameApp/CMakeLists.txt"
   "/usr/lib/cmake/glfw3/glfw3Config.cmake"
   "/usr/lib/cmake/glfw3/glfw3ConfigVersion.cmake"
   "/usr/lib/cmake/glfw3/glfw3Targets-none.cmake"
@@ -70,8 +69,7 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "core/Input/CMakeFiles/CMakeDirectoryInformation.cmake"
   "core/Graphics/CMakeFiles/CMakeDirectoryInformation.cmake"
   "core/Game/CMakeFiles/CMakeDirectoryInformation.cmake"
-  "core/Logic/CMakeFiles/CMakeDirectoryInformation.cmake"
-  "game/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "gameApp/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
@@ -79,6 +77,5 @@ set(CMAKE_DEPEND_INFO_FILES
   "core/Window/CMakeFiles/window.dir/DependInfo.cmake"
   "core/Input/CMakeFiles/input.dir/DependInfo.cmake"
   "core/Game/CMakeFiles/game.dir/DependInfo.cmake"
-  "core/Logic/CMakeFiles/logic.dir/DependInfo.cmake"
-  "game/CMakeFiles/fersa.dir/DependInfo.cmake"
+  "gameApp/CMakeFiles/fersa.dir/DependInfo.cmake"
   )

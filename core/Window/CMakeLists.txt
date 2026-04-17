@@ -1,8 +1,12 @@
-add_library(window
-  Window.cpp
-  Window.hpp
+add_library(window STATIC
+    Window.cpp
 )
 
-link_libraries(window PRIVATE
-  core
+target_include_directories(window PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(window
+    PUBLIC
+    graphics
 )

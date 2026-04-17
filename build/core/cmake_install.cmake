@@ -48,7 +48,6 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/nubsdre/Documents/codes/projects/game_engine/build/core/Input/cmake_install.cmake")
   include("/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/cmake_install.cmake")
   include("/home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/cmake_install.cmake")
-  include("/home/nubsdre/Documents/codes/projects/game_engine/build/core/Logic/cmake_install.cmake")
 
 endif()
 

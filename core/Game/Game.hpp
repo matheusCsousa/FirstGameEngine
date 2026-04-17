@@ -11,9 +11,7 @@ namespace Core {
 
     struct GameSpecs {
         std::string title = "Game";
-        Core::WindowSpecs windowSpec = {
-            800, 600
-        };
+        Core::WindowSpecs windowSpec;
     };
 
     class Game {

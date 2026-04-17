@@ -156,19 +156,6 @@ game/fast:
 .PHONY : game/fast
 
 #=============================================================================
-# Target rules for targets named logic
-
-# Build rule for target.
-logic: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 logic
-.PHONY : logic
-
-# fast build rule for target.
-logic/fast:
-	$(MAKE) $(MAKESILENT) -f core/Logic/CMakeFiles/logic.dir/build.make core/Logic/CMakeFiles/logic.dir/build
-.PHONY : logic/fast
-
-#=============================================================================
 # Target rules for targets named fersa
 
 # Build rule for target.
@@ -178,7 +165,7 @@ fersa: cmake_check_build_system
 
 # fast build rule for target.
 fersa/fast:
-	$(MAKE) $(MAKESILENT) -f game/CMakeFiles/fersa.dir/build.make game/CMakeFiles/fersa.dir/build
+	$(MAKE) $(MAKESILENT) -f gameApp/CMakeFiles/fersa.dir/build.make gameApp/CMakeFiles/fersa.dir/build
 .PHONY : fersa/fast
 
 # Help Target
@@ -192,7 +179,6 @@ help:
 	@echo "... fersa"
 	@echo "... game"
 	@echo "... input"
-	@echo "... logic"
 	@echo "... window"
 .PHONY : help
 

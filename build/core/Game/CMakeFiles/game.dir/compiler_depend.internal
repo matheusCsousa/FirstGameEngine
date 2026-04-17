@@ -139,6 +139,7 @@ core/Game/CMakeFiles/game.dir/Game.cpp.o
  /usr/include/c++/15.2.1/bits/new_allocator.h
  /usr/include/c++/15.2.1/bits/ostream.h
  /usr/include/c++/15.2.1/bits/ostream_insert.h
+ /usr/include/c++/15.2.1/bits/out_ptr.h
  /usr/include/c++/15.2.1/bits/postypes.h
  /usr/include/c++/15.2.1/bits/predefined_ops.h
  /usr/include/c++/15.2.1/bits/ptr_traits.h

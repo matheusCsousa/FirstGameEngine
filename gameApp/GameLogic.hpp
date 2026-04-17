@@ -3,8 +3,8 @@
 #include "../core/Logic/Logic.hpp"
 
 class GameLogic : public Core::Logic {
-private:
-
 public:
+    void onUpdate() override;
+    void onRender() override;
 
 };

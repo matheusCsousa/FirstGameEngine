@@ -45,7 +45,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/nubsdre/Documents/codes/projects/game_engine/build/core/cmake_install.cmake")
-  include("/home/nubsdre/Documents/codes/projects/game_engine/build/game/cmake_install.cmake")
+  include("/home/nubsdre/Documents/codes/projects/game_engine/build/gameApp/cmake_install.cmake")
 
 endif()
 

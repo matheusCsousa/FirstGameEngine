@@ -13,9 +13,6 @@
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/CMakeFiles/game.dir
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/CMakeFiles/edit_cache.dir
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/CMakeFiles/rebuild_cache.dir
-/home/nubsdre/Documents/codes/projects/game_engine/build/core/Logic/CMakeFiles/logic.dir
-/home/nubsdre/Documents/codes/projects/game_engine/build/core/Logic/CMakeFiles/edit_cache.dir
-/home/nubsdre/Documents/codes/projects/game_engine/build/core/Logic/CMakeFiles/rebuild_cache.dir
-/home/nubsdre/Documents/codes/projects/game_engine/build/game/CMakeFiles/fersa.dir
-/home/nubsdre/Documents/codes/projects/game_engine/build/game/CMakeFiles/edit_cache.dir
-/home/nubsdre/Documents/codes/projects/game_engine/build/game/CMakeFiles/rebuild_cache.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/gameApp/CMakeFiles/fersa.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/gameApp/CMakeFiles/edit_cache.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/gameApp/CMakeFiles/rebuild_cache.dir

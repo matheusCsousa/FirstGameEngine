@@ -3,7 +3,6 @@
 #include "../core/Game/Game.hpp"
 #include "GameLogic.hpp"
 
-
 int main() {
     Core::GameSpecs gameSpecs;
     gameSpecs.title = "Flap Bird";
