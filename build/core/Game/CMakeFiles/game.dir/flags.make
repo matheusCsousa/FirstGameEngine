@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/nubsdre/Documents/codes/projects/game_engine/core/Game -I/home/nubsdre/Documents/codes/projects/game_engine/core/Window -I/home/nubsdre/Documents/codes/projects/game_engine/core/Input
+CXX_INCLUDES = -I/home/nubsdre/Documents/codes/projects/game_engine/core/Game -I/home/nubsdre/Documents/codes/projects/game_engine/core/Window -I/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/Renderer/VAO -I/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/Renderer/VBO -I/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/Renderer/EBO -I/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/Renderer/Shader -I/home/nubsdre/Documents/codes/projects/game_engine/core/Input
 
 CXX_FLAGS = -std=gnu++23
 

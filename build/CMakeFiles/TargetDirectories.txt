@@ -10,6 +10,12 @@
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Input/CMakeFiles/rebuild_cache.dir
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/CMakeFiles/edit_cache.dir
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/CMakeFiles/rebuild_cache.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Renderer/CMakeFiles/renderer.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Renderer/CMakeFiles/edit_cache.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Renderer/CMakeFiles/rebuild_cache.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Mesh/CMakeFiles/mesh.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Mesh/CMakeFiles/edit_cache.dir
+/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Mesh/CMakeFiles/rebuild_cache.dir
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/CMakeFiles/game.dir
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/CMakeFiles/edit_cache.dir
 /home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/CMakeFiles/rebuild_cache.dir

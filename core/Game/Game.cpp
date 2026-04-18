@@ -21,6 +21,7 @@ namespace Core {
     void Game::run() {
 
         while (!m_window->shouldClose()) {
+            Core::Input::update();
             m_window->pollEvents();
             m_logic->onUpdate();
             m_logic->onRender();

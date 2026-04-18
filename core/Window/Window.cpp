@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#include "../Input/Input.hpp"
-
 namespace Core {
 
     Window::Window(const WindowSpecs& specs)

@@ -6,6 +6,8 @@
 		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Window/cmake_install.cmake",
 		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Input/cmake_install.cmake",
 		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Renderer/cmake_install.cmake",
+		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Graphics/Mesh/cmake_install.cmake",
 		"/home/nubsdre/Documents/codes/projects/game_engine/build/core/Game/cmake_install.cmake",
 		"/home/nubsdre/Documents/codes/projects/game_engine/build/gameApp/cmake_install.cmake"
 	],

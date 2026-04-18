@@ -136,20 +136,62 @@ core/Game/clean: core/Game/CMakeFiles/game.dir/clean
 # Directory level rules for directory core/Graphics
 
 # Recursive "all" directory target.
-core/Graphics/all:
+core/Graphics/all: core/Graphics/Renderer/all
+core/Graphics/all: core/Graphics/Mesh/all
 .PHONY : core/Graphics/all
 
 # Recursive "codegen" directory target.
-core/Graphics/codegen:
+core/Graphics/codegen: core/Graphics/Renderer/codegen
+core/Graphics/codegen: core/Graphics/Mesh/codegen
 .PHONY : core/Graphics/codegen
 
 # Recursive "preinstall" directory target.
-core/Graphics/preinstall:
+core/Graphics/preinstall: core/Graphics/Renderer/preinstall
+core/Graphics/preinstall: core/Graphics/Mesh/preinstall
 .PHONY : core/Graphics/preinstall
 
 # Recursive "clean" directory target.
-core/Graphics/clean:
+core/Graphics/clean: core/Graphics/Renderer/clean
+core/Graphics/clean: core/Graphics/Mesh/clean
 .PHONY : core/Graphics/clean
+
+#=============================================================================
+# Directory level rules for directory core/Graphics/Mesh
+
+# Recursive "all" directory target.
+core/Graphics/Mesh/all: core/Graphics/Mesh/CMakeFiles/mesh.dir/all
+.PHONY : core/Graphics/Mesh/all
+
+# Recursive "codegen" directory target.
+core/Graphics/Mesh/codegen: core/Graphics/Mesh/CMakeFiles/mesh.dir/codegen
+.PHONY : core/Graphics/Mesh/codegen
+
+# Recursive "preinstall" directory target.
+core/Graphics/Mesh/preinstall:
+.PHONY : core/Graphics/Mesh/preinstall
+
+# Recursive "clean" directory target.
+core/Graphics/Mesh/clean: core/Graphics/Mesh/CMakeFiles/mesh.dir/clean
+.PHONY : core/Graphics/Mesh/clean
+
+#=============================================================================
+# Directory level rules for directory core/Graphics/Renderer
+
+# Recursive "all" directory target.
+core/Graphics/Renderer/all: core/Graphics/Renderer/CMakeFiles/renderer.dir/all
+.PHONY : core/Graphics/Renderer/all
+
+# Recursive "codegen" directory target.
+core/Graphics/Renderer/codegen: core/Graphics/Renderer/CMakeFiles/renderer.dir/codegen
+.PHONY : core/Graphics/Renderer/codegen
+
+# Recursive "preinstall" directory target.
+core/Graphics/Renderer/preinstall:
+.PHONY : core/Graphics/Renderer/preinstall
+
+# Recursive "clean" directory target.
+core/Graphics/Renderer/clean: core/Graphics/Renderer/CMakeFiles/renderer.dir/clean
+.PHONY : core/Graphics/Renderer/clean
 
 #=============================================================================
 # Directory level rules for directory core/Input
@@ -212,15 +254,15 @@ gameApp/clean: gameApp/CMakeFiles/fersa.dir/clean
 # Target rules for target core/Window/CMakeFiles/window.dir
 
 # All Build rule for target.
-core/Window/CMakeFiles/window.dir/all:
+core/Window/CMakeFiles/window.dir/all: core/Graphics/Renderer/CMakeFiles/renderer.dir/all
 	$(MAKE) $(MAKESILENT) -f core/Window/CMakeFiles/window.dir/build.make core/Window/CMakeFiles/window.dir/depend
 	$(MAKE) $(MAKESILENT) -f core/Window/CMakeFiles/window.dir/build.make core/Window/CMakeFiles/window.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Built target window"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=16,17 "Built target window"
 .PHONY : core/Window/CMakeFiles/window.dir/all
 
 # Build rule for subdir invocation for target.
 core/Window/CMakeFiles/window.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 8
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core/Window/CMakeFiles/window.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
 .PHONY : core/Window/CMakeFiles/window.dir/rule
@@ -232,7 +274,7 @@ window: core/Window/CMakeFiles/window.dir/rule
 # codegen rule for target.
 core/Window/CMakeFiles/window.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f core/Window/CMakeFiles/window.dir/build.make core/Window/CMakeFiles/window.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Finished codegen for target window"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=16,17 "Finished codegen for target window"
 .PHONY : core/Window/CMakeFiles/window.dir/codegen
 
 # clean rule for target.
@@ -244,7 +286,7 @@ core/Window/CMakeFiles/window.dir/clean:
 # Target rules for target core/Input/CMakeFiles/input.dir
 
 # All Build rule for target.
-core/Input/CMakeFiles/input.dir/all:
+core/Input/CMakeFiles/input.dir/all: core/Graphics/Renderer/CMakeFiles/renderer.dir/all
 	$(MAKE) $(MAKESILENT) -f core/Input/CMakeFiles/input.dir/build.make core/Input/CMakeFiles/input.dir/depend
 	$(MAKE) $(MAKESILENT) -f core/Input/CMakeFiles/input.dir/build.make core/Input/CMakeFiles/input.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=6,7 "Built target input"
@@ -252,7 +294,7 @@ core/Input/CMakeFiles/input.dir/all:
 
 # Build rule for subdir invocation for target.
 core/Input/CMakeFiles/input.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 8
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core/Input/CMakeFiles/input.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
 .PHONY : core/Input/CMakeFiles/input.dir/rule
@@ -273,11 +315,76 @@ core/Input/CMakeFiles/input.dir/clean:
 .PHONY : core/Input/CMakeFiles/input.dir/clean
 
 #=============================================================================
+# Target rules for target core/Graphics/Renderer/CMakeFiles/renderer.dir
+
+# All Build rule for target.
+core/Graphics/Renderer/CMakeFiles/renderer.dir/all:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Renderer/CMakeFiles/renderer.dir/build.make core/Graphics/Renderer/CMakeFiles/renderer.dir/depend
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Renderer/CMakeFiles/renderer.dir/build.make core/Graphics/Renderer/CMakeFiles/renderer.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=10,11,12,13,14,15 "Built target renderer"
+.PHONY : core/Graphics/Renderer/CMakeFiles/renderer.dir/all
+
+# Build rule for subdir invocation for target.
+core/Graphics/Renderer/CMakeFiles/renderer.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 6
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core/Graphics/Renderer/CMakeFiles/renderer.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
+.PHONY : core/Graphics/Renderer/CMakeFiles/renderer.dir/rule
+
+# Convenience name for target.
+renderer: core/Graphics/Renderer/CMakeFiles/renderer.dir/rule
+.PHONY : renderer
+
+# codegen rule for target.
+core/Graphics/Renderer/CMakeFiles/renderer.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Renderer/CMakeFiles/renderer.dir/build.make core/Graphics/Renderer/CMakeFiles/renderer.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=10,11,12,13,14,15 "Finished codegen for target renderer"
+.PHONY : core/Graphics/Renderer/CMakeFiles/renderer.dir/codegen
+
+# clean rule for target.
+core/Graphics/Renderer/CMakeFiles/renderer.dir/clean:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Renderer/CMakeFiles/renderer.dir/build.make core/Graphics/Renderer/CMakeFiles/renderer.dir/clean
+.PHONY : core/Graphics/Renderer/CMakeFiles/renderer.dir/clean
+
+#=============================================================================
+# Target rules for target core/Graphics/Mesh/CMakeFiles/mesh.dir
+
+# All Build rule for target.
+core/Graphics/Mesh/CMakeFiles/mesh.dir/all:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Mesh/CMakeFiles/mesh.dir/build.make core/Graphics/Mesh/CMakeFiles/mesh.dir/depend
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Mesh/CMakeFiles/mesh.dir/build.make core/Graphics/Mesh/CMakeFiles/mesh.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Built target mesh"
+.PHONY : core/Graphics/Mesh/CMakeFiles/mesh.dir/all
+
+# Build rule for subdir invocation for target.
+core/Graphics/Mesh/CMakeFiles/mesh.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core/Graphics/Mesh/CMakeFiles/mesh.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
+.PHONY : core/Graphics/Mesh/CMakeFiles/mesh.dir/rule
+
+# Convenience name for target.
+mesh: core/Graphics/Mesh/CMakeFiles/mesh.dir/rule
+.PHONY : mesh
+
+# codegen rule for target.
+core/Graphics/Mesh/CMakeFiles/mesh.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Mesh/CMakeFiles/mesh.dir/build.make core/Graphics/Mesh/CMakeFiles/mesh.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=8,9 "Finished codegen for target mesh"
+.PHONY : core/Graphics/Mesh/CMakeFiles/mesh.dir/codegen
+
+# clean rule for target.
+core/Graphics/Mesh/CMakeFiles/mesh.dir/clean:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Mesh/CMakeFiles/mesh.dir/build.make core/Graphics/Mesh/CMakeFiles/mesh.dir/clean
+.PHONY : core/Graphics/Mesh/CMakeFiles/mesh.dir/clean
+
+#=============================================================================
 # Target rules for target core/Game/CMakeFiles/game.dir
 
 # All Build rule for target.
 core/Game/CMakeFiles/game.dir/all: core/Window/CMakeFiles/window.dir/all
 core/Game/CMakeFiles/game.dir/all: core/Input/CMakeFiles/input.dir/all
+core/Game/CMakeFiles/game.dir/all: core/Graphics/Renderer/CMakeFiles/renderer.dir/all
 	$(MAKE) $(MAKESILENT) -f core/Game/CMakeFiles/game.dir/build.make core/Game/CMakeFiles/game.dir/depend
 	$(MAKE) $(MAKESILENT) -f core/Game/CMakeFiles/game.dir/build.make core/Game/CMakeFiles/game.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles --progress-num=4,5 "Built target game"
@@ -285,7 +392,7 @@ core/Game/CMakeFiles/game.dir/all: core/Input/CMakeFiles/input.dir/all
 
 # Build rule for subdir invocation for target.
 core/Game/CMakeFiles/game.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 6
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 12
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 core/Game/CMakeFiles/game.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
 .PHONY : core/Game/CMakeFiles/game.dir/rule
@@ -311,6 +418,7 @@ core/Game/CMakeFiles/game.dir/clean:
 # All Build rule for target.
 gameApp/CMakeFiles/fersa.dir/all: core/Window/CMakeFiles/window.dir/all
 gameApp/CMakeFiles/fersa.dir/all: core/Input/CMakeFiles/input.dir/all
+gameApp/CMakeFiles/fersa.dir/all: core/Graphics/Renderer/CMakeFiles/renderer.dir/all
 gameApp/CMakeFiles/fersa.dir/all: core/Game/CMakeFiles/game.dir/all
 	$(MAKE) $(MAKESILENT) -f gameApp/CMakeFiles/fersa.dir/build.make gameApp/CMakeFiles/fersa.dir/depend
 	$(MAKE) $(MAKESILENT) -f gameApp/CMakeFiles/fersa.dir/build.make gameApp/CMakeFiles/fersa.dir/build
@@ -319,7 +427,7 @@ gameApp/CMakeFiles/fersa.dir/all: core/Game/CMakeFiles/game.dir/all
 
 # Build rule for subdir invocation for target.
 gameApp/CMakeFiles/fersa.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 9
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 15
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 gameApp/CMakeFiles/fersa.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/nubsdre/Documents/codes/projects/game_engine/build/CMakeFiles 0
 .PHONY : gameApp/CMakeFiles/fersa.dir/rule

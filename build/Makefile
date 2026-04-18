@@ -143,6 +143,32 @@ input/fast:
 .PHONY : input/fast
 
 #=============================================================================
+# Target rules for targets named renderer
+
+# Build rule for target.
+renderer: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 renderer
+.PHONY : renderer
+
+# fast build rule for target.
+renderer/fast:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Renderer/CMakeFiles/renderer.dir/build.make core/Graphics/Renderer/CMakeFiles/renderer.dir/build
+.PHONY : renderer/fast
+
+#=============================================================================
+# Target rules for targets named mesh
+
+# Build rule for target.
+mesh: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 mesh
+.PHONY : mesh
+
+# fast build rule for target.
+mesh/fast:
+	$(MAKE) $(MAKESILENT) -f core/Graphics/Mesh/CMakeFiles/mesh.dir/build.make core/Graphics/Mesh/CMakeFiles/mesh.dir/build
+.PHONY : mesh/fast
+
+#=============================================================================
 # Target rules for targets named game
 
 # Build rule for target.
@@ -179,6 +205,8 @@ help:
 	@echo "... fersa"
 	@echo "... game"
 	@echo "... input"
+	@echo "... mesh"
+	@echo "... renderer"
 	@echo "... window"
 .PHONY : help
 

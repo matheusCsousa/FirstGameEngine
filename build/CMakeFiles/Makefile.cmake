@@ -13,6 +13,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/home/nubsdre/Documents/codes/projects/game_engine/core/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Game/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/CMakeLists.txt"
+  "/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/Mesh/CMakeLists.txt"
+  "/home/nubsdre/Documents/codes/projects/game_engine/core/Graphics/Renderer/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Input/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/core/Window/CMakeLists.txt"
   "/home/nubsdre/Documents/codes/projects/game_engine/gameApp/CMakeLists.txt"
@@ -68,6 +70,8 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "core/Window/CMakeFiles/CMakeDirectoryInformation.cmake"
   "core/Input/CMakeFiles/CMakeDirectoryInformation.cmake"
   "core/Graphics/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "core/Graphics/Renderer/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "core/Graphics/Mesh/CMakeFiles/CMakeDirectoryInformation.cmake"
   "core/Game/CMakeFiles/CMakeDirectoryInformation.cmake"
   "gameApp/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
@@ -76,6 +80,8 @@ set(CMAKE_MAKEFILE_PRODUCTS
 set(CMAKE_DEPEND_INFO_FILES
   "core/Window/CMakeFiles/window.dir/DependInfo.cmake"
   "core/Input/CMakeFiles/input.dir/DependInfo.cmake"
+  "core/Graphics/Renderer/CMakeFiles/renderer.dir/DependInfo.cmake"
+  "core/Graphics/Mesh/CMakeFiles/mesh.dir/DependInfo.cmake"
   "core/Game/CMakeFiles/game.dir/DependInfo.cmake"
   "gameApp/CMakeFiles/fersa.dir/DependInfo.cmake"
   )

@@ -4,6 +4,9 @@
 
 class GameLogic : public Core::Logic {
 public:
+    GameLogic();
+    ~GameLogic();
+
     void onUpdate() override;
     void onRender() override;
 
