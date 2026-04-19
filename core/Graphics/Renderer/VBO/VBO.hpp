@@ -3,16 +3,14 @@
 #include <GL/glew.h>
 
 namespace Core::Renderer {
+class VBO {
+public:
+    GLuint ID;
 
-    class VBO {
-    public:
-        GLuint ID;
+    VBO(const void* data, GLsizeiptr size);
 
-        VBO(const void* data, GLsizeiptr size);
-
-        void bind();
-        void unbind();
-        void del();
-    };
-
+    void bind();
+    void unbind();
+    void del();
+};
 }

@@ -9,5 +9,4 @@ public:
 
     void onUpdate() override;
     void onRender() override;
-
 };
