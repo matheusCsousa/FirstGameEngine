@@ -1,7 +1,6 @@
 #include "VBO.hpp"
 
 namespace Core::Renderer {
-
 VBO::VBO(const void* data, GLsizeiptr size) {
     glGenBuffers(1, &ID);
 

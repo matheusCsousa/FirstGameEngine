@@ -1,5 +1,5 @@
-#include "../core/Game/Game.hpp"
 #include "GameLogic.hpp"
+#include "../core/Game/Game.hpp"
 
 int main() {
     Core::GameSpecs gameSpecs;

@@ -3,7 +3,7 @@
 #include "../Mesh/Mesh.hpp"
 #include "Shader/Shader.hpp"
 
-#include <glm/glm.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace Core::Graphics {
 class Renderer {

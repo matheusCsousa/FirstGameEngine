@@ -1,5 +1,8 @@
 #include "Window.hpp"
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include <iostream>
 
 namespace Core {
@@ -66,4 +69,9 @@ void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height
     (void)window;
     glViewport(0, 0, width, height);
 }
+
+void Window::swapBuffers() { glfwSwapBuffers(m_window); }
+bool Window::shouldClose() { return glfwWindowShouldClose(m_window); }
+void Window::setShouldClose(bool value) { glfwSetWindowShouldClose(m_window, value); }
+void Window::pollEvents() { glfwPollEvents(); }
 }

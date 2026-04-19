@@ -1,6 +1,6 @@
 #include "Input.hpp"
-#include <GLFW/glfw3.h>
 
+#include <GLFW/glfw3.h>
 
 namespace Core {
 
@@ -11,8 +11,8 @@ double Input::lastX{};
 double Input::lastY{};
 double Input::xChange{};
 double Input::yChange{};
-GLfloat Input::deltaTime{};
-GLfloat Input::lastTime{};
+float Input::deltaTime{};
+float Input::lastTime{};
 
 bool Input::mouseFirstMoved{true};
 
@@ -105,6 +105,10 @@ void Input::toggleMouseMode() {
     }
 }
 
+int Input::getMouseMode() {
+    return glfwGetInputMode(Input::window, GLFW_CURSOR);
+};
+
 glm::dvec2 Input::getMouseChange() {
     glm::dvec2 result(xChange, yChange);
     xChange = 0.0f;
@@ -126,13 +130,12 @@ void Input::update() {
     }
 
 
-    GLfloat now = glfwGetTime();
+    float now = glfwGetTime();
     deltaTime = now - lastTime;
     lastTime = now;
 }
 
-GLfloat Input::getDeltaTime() {
+float Input::getDeltaTime() {
     return deltaTime;
 }
-
 }

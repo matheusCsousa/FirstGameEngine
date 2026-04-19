@@ -1,7 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+struct GLFWwindow;
 
 namespace Core {
 struct WindowSpecs {
@@ -26,9 +25,9 @@ public:
     void destroy();
     void update();
 
-    void swapBuffers() { glfwSwapBuffers(m_window); }
-    bool shouldClose() { return glfwWindowShouldClose(m_window); }
-    void setShouldClose(bool value) { glfwSetWindowShouldClose(m_window, value); }
-    void pollEvents() { glfwPollEvents(); }
+    void swapBuffers();
+    bool shouldClose();
+    void setShouldClose(bool value);
+    void pollEvents();
 };
 }
