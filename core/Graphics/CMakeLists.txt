@@ -8,8 +8,10 @@ find_package(glfw3 REQUIRED)
 add_library(graphics INTERFACE)
 
 target_link_libraries(graphics INTERFACE
+  mesh
   renderer
   OpenGL::GL
   GLEW::GLEW
   glfw
+  glm
 )
