@@ -1,13 +1,11 @@
 #pragma once
 
-#include <GL/glew.h>
-
 namespace Core::Renderer {
 class EBO {
 public:
-    GLuint ID;
+    unsigned int ID;
 
-    EBO(const void* data, GLsizeiptr size);
+    EBO(const void* data, int size);
 
     void bind();
     void unbind();

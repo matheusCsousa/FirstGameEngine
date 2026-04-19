@@ -1,4 +1,5 @@
 #include "VAO.hpp"
+#include <GL/glew.h>
 
 namespace Core::Renderer {
 

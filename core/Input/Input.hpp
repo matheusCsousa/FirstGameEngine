@@ -1,7 +1,8 @@
 #pragma once
 
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
+
+struct GLFWwindow;
 
 namespace Core {
 class Input {
@@ -27,11 +28,11 @@ public:
 
     static void setMouseMode(bool disabled);
     static void toggleMouseMode();
-    static int getMouseMode() { return glfwGetInputMode(Input::window, GLFW_CURSOR); };
+    static int getMouseMode();
 
     static glm::dvec2 getMouseChange();
 
-    static GLfloat getDeltaTime();
+    static float getDeltaTime();
 
 private:
     static GLFWwindow* window;
@@ -41,8 +42,8 @@ private:
     static double lastY;
     static double xChange;
     static double yChange;
-    static GLfloat deltaTime;
-    static GLfloat lastTime;
+    static float deltaTime;
+    static float lastTime;
     static bool mouseFirstMoved;
 
 };
