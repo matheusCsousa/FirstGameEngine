@@ -17,7 +17,7 @@ class Game {
 private:
     GameSpecs m_specs;
     std::unique_ptr<Core::Logic> m_logic;
-    std::unique_ptr<Core::Window> m_window;
+    std::shared_ptr<Core::Window> m_window;
 
 
 public:
@@ -27,7 +27,7 @@ public:
 
     template<typename TLogic>
     void pushLogic() {
-        m_logic = std::make_unique<TLogic>();
+        m_logic = std::make_unique<TLogic>(m_window);
     };
 };
 }
