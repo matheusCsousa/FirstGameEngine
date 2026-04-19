@@ -29,5 +29,7 @@ public:
     bool shouldClose();
     void setShouldClose(bool value);
     void pollEvents();
+
+    void requestClose();
 };
 }

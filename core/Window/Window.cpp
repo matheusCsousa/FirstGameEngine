@@ -74,4 +74,7 @@ void Window::swapBuffers() { glfwSwapBuffers(m_window); }
 bool Window::shouldClose() { return glfwWindowShouldClose(m_window); }
 void Window::setShouldClose(bool value) { glfwSetWindowShouldClose(m_window, value); }
 void Window::pollEvents() { glfwPollEvents(); }
+void Window::requestClose() {
+    glfwSetWindowShouldClose(m_window, true);
+}
 }
