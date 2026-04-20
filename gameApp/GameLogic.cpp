@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/detail/qualifier.hpp>
+#include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
@@ -12,21 +13,24 @@
 #include "../core/Window/Window.hpp"
 #include "../core/Graphics/Renderer/Renderer.hpp"
 #include "../core/Graphics/Mesh/Cube.hpp"
+#include "../core/Graphics/Camera/Camera.hpp"
+#include "../core/Entity/Entity.hpp"
+#include "../core/Scene/Scene.hpp"
 
-struct GameLogic::object {
-    Core::Graphics::Mesh mesh;
-    Core::Render::Shader shader;
-    glm::mat4 model;
-};
+Core::Graphics::Camera camera;
+Core::Scene scene(camera);
 
 GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
     : m_window(window) {
     std::cout << "GameLogic started!" << std::endl;
-    Core::Graphics::Mesh mesh = Core::Graphics::Cube::create();
+
+    Core::Graphics::Mesh mesh = Core::Graphics::Cube::createMesh();
     Core::Render::Shader shader("gameApp/shader/shader.vert", "gameApp/shader/shader.frag");
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    m_objects.push_back(object{mesh, shader, model});
+
+    auto poly = scene.createEntity(mesh, model, shader);
+
+    camera = Core::Graphics::Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 60.0f, 0.1f, 100.0f);
 }
 
 void GameLogic::onUpdate() {
@@ -42,21 +46,16 @@ void GameLogic::onUpdate() {
         std::cout << "Left mouse button pressed!" << std::endl;
     }
 
-    static float rotation = 0.0f;
-    rotation += 0.01f;
-
-    m_objects[0].model = glm::rotate(
-        glm::mat4(1.0f),
-        rotation,
-        glm::vec3(0.5f, 1.0f, 0.0f)
-    );
+    scene.getEntities()[0]->position.x = 2.0f;
+    scene.getEntities()[0]->rotation.y += 1.0f;
 }
 
 void GameLogic::onRender() {
     Core::Graphics::Renderer::Clear();
-    for (auto &obj : m_objects) {
-        Core::Graphics::Renderer::Draw(obj.mesh, obj.shader, obj.model);
-    }
+    scene.getEntities()[0]->getShader()->activate();
+    scene.getEntities()[0]->getShader()->setMat4("view", camera.calcViewMatrix());
+    scene.getEntities()[0]->getShader()->setMat4("projection", camera.calcProjectionMatrix(m_window->aspectRatio()));
+    Core::Graphics::Renderer::Draw(*scene.getEntities()[0]->getMesh(), *scene.getEntities()[0]->getShader(), scene.getEntities()[0]->getModel());
 }
 
 GameLogic::~GameLogic() {

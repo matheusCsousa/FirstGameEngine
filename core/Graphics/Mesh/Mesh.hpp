@@ -19,6 +19,7 @@ private:
     int indexCount{};
 
 public:
+    Mesh() {}
     Mesh(
         const float* vertices,
         size_t vertexSize,
