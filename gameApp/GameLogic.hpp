@@ -16,7 +16,7 @@ namespace Core {
 class GameLogic : public Core::Logic {
 private:
     std::shared_ptr<Core::Window> m_window;
-    std::vector<Core::Scene*> m_scenes;
+    std::vector<std::unique_ptr<Core::Scene>> m_scenes;
 
 public:
     GameLogic(std::shared_ptr<Core::Window> window);
