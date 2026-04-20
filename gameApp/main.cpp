@@ -6,6 +6,8 @@ int main() {
     gameSpecs.title = "Flap Bird";
     gameSpecs.windowSpec.width = 1280;
     gameSpecs.windowSpec.height = 720;
+    gameSpecs.windowSpec.bufferWidth = 1280;
+    gameSpecs.windowSpec.bufferHeight = 720;
 
     Core::Game game(gameSpecs);
     game.pushLogic<GameLogic>();

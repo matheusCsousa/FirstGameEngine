@@ -6,7 +6,7 @@ namespace Core::Graphics {
 
     class Cube {
     public:
-        static Mesh create();
+        static Mesh createMesh();
     };
 
 }

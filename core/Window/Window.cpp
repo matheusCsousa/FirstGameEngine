@@ -34,6 +34,7 @@ void Window::create() {
 
     glfwMakeContextCurrent(m_window);
 
+    glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
 
     glewExperimental = GL_TRUE;
@@ -65,15 +66,33 @@ void Window::update() {
     glfwSwapBuffers(m_window);
 }
 
-void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
-    (void)window;
+void Window::framebuffer_size_callback(
+    GLFWwindow* window,
+    int width,
+    int height
+) {
     glViewport(0, 0, width, height);
+
+    Window* win = static_cast<Window*>(
+        glfwGetWindowUserPointer(window)
+    );
+
+    win->m_specs.bufferWidth = width;
+    win->m_specs.bufferHeight = height;
+}
+
+float Window::aspectRatio() {
+    return (float)m_specs.bufferWidth / (float)m_specs.bufferHeight;
 }
 
 void Window::swapBuffers() { glfwSwapBuffers(m_window); }
+
 bool Window::shouldClose() { return glfwWindowShouldClose(m_window); }
+
 void Window::setShouldClose(bool value) { glfwSetWindowShouldClose(m_window, value); }
+
 void Window::pollEvents() { glfwPollEvents(); }
+
 void Window::requestClose() {
     glfwSetWindowShouldClose(m_window, true);
 }

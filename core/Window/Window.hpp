@@ -6,6 +6,8 @@ namespace Core {
 struct WindowSpecs {
     int width = 800;
     int height = 600;
+    int bufferWidth = 800;
+    int bufferHeight = 600;
 };
 
 class Window {
@@ -31,5 +33,7 @@ public:
     void pollEvents();
 
     void requestClose();
+
+    float aspectRatio();
 };
 }

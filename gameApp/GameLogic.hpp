@@ -1,20 +1,22 @@
 #pragma once
 
-#include "../core/Logic/Logic.hpp"
 #include <memory>
 #include <vector>
 
+#include <glm/mat4x4.hpp>
+
+#include "../core/Logic/Logic.hpp"
+
 namespace Core {
     struct Window;
+    struct Entity;
+    struct Scene;
 }
-
 
 class GameLogic : public Core::Logic {
 private:
-    struct object;
-    std::vector<object> m_objects;
     std::shared_ptr<Core::Window> m_window;
-
+    std::vector<Core::Scene*> m_scenes;
 
 public:
     GameLogic(std::shared_ptr<Core::Window> window);
