@@ -1,9 +1,9 @@
 #include "EBO.hpp"
 #include <GL/glew.h>
 
-namespace Core::Renderer {
+namespace Core::Render {
 
-EBO::EBO(const void* data, int size) {
+EBO::EBO(const void* data, long size) {
     glGenBuffers(1, &ID);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ID);

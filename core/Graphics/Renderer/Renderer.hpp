@@ -8,12 +8,12 @@
 namespace Core::Graphics {
 class Renderer {
 public:
-    void Draw(
+    static void Draw(
         const Core::Graphics::Mesh& mesh,
-        const Core::Renderer::Shader& shader,
+        const Core::Render::Shader& shader,
         const glm::mat4& model
     );
 
-    void Clear();
+    static void Clear();
 };
 }

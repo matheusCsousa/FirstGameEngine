@@ -1,20 +1,21 @@
 #pragma once
 
 #include "../VBO/VBO.hpp"
+#include <memory>
 
-namespace Core::Renderer {
+namespace Core::Render {
 class VAO {
 public:
-    GLuint ID;
+    unsigned int ID;
 
     VAO();
 
     void linkVBO(
-        VBO& vbo,
-        GLuint layout,
-        GLint size,
-        GLenum type,
-        GLsizei stride,
+        std::shared_ptr<VBO> vbo,
+        unsigned int layout,
+        unsigned int size,
+        unsigned int type,
+        int stride,
         void* offset
     );
 

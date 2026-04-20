@@ -1,5 +1,6 @@
 add_library(mesh
   Mesh.cpp
+  Cube.cpp
 )
 
 target_include_directories(mesh PUBLIC

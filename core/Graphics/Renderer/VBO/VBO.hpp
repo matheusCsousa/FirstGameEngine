@@ -1,13 +1,11 @@
 #pragma once
 
-#include <GL/glew.h>
-
-namespace Core::Renderer {
+namespace Core::Render {
 class VBO {
 public:
-    GLuint ID;
+    unsigned int ID;
 
-    VBO(const void* data, GLsizeiptr size);
+    VBO(const void* data, long size);
 
     void bind();
     void unbind();

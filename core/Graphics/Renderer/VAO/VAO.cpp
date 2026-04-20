@@ -1,21 +1,23 @@
 #include "VAO.hpp"
 #include <GL/glew.h>
+#include <memory>
 
-namespace Core::Renderer {
+namespace Core::Render {
 
 VAO::VAO() {
     glGenVertexArrays(1, &ID);
 }
 
 void VAO::linkVBO(
-    VBO& vbo,
-    GLuint layout,
-    GLint size,
-    GLenum type,
-    GLsizei stride,
+    std::shared_ptr<VBO> vbo,
+    unsigned int layout,
+    unsigned int size,
+    unsigned int type,
+    int stride,
     void* offset
 ) {
-    vbo.bind();
+    bind();
+    vbo->bind();
 
     glVertexAttribPointer(
         layout,
@@ -28,7 +30,8 @@ void VAO::linkVBO(
 
     glEnableVertexAttribArray(layout);
 
-    vbo.unbind();
+    vbo->unbind();
+    unbind();
 }
 
 void VAO::bind() {
