@@ -6,7 +6,7 @@
 class FreeCam : public Core::Graphics::Camera {
 private:
     float speed = 5.0f;
-    float sensitivity = 0.1f;
+    float sensitivity = 0.6f;
 
 public:
     using Core::Graphics::Camera::Camera;

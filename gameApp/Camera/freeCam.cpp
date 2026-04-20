@@ -25,8 +25,8 @@ void FreeCam::update() {
    }
 
     glm::dvec2 mouseChange = Core::Input::getMouseChange();
-    yaw += mouseChange.x;
-    pitch += mouseChange.y;
+    yaw += mouseChange.x * sensitivity;
+    pitch += mouseChange.y * sensitivity;
     if (pitch >  89.0f) pitch =  89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
 }
