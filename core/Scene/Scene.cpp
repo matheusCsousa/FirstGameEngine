@@ -25,6 +25,18 @@ std::vector<std::unique_ptr<Core::Entity>>& Scene::getEntities() {
     return m_entities;
 }
 
+Core::Render::Shader* Scene::createShader(const char* vertexPath, const char* fragmentPath) {
+    m_shaders.push_back(
+        std::make_unique<Core::Render::Shader>(vertexPath, fragmentPath)
+    );
+
+    return m_shaders.back().get();
+}
+
+std::vector<std::unique_ptr<Core::Render::Shader>>& Scene::getShaders() {
+    return m_shaders;
+}
+
 Core::Graphics::Camera* Scene::getCamera() {
     return m_camera.get();
 }
@@ -36,5 +48,9 @@ void Scene::render(Window* window) {
         enty->getShader()->setMat4("projection", m_camera->calcProjectionMatrix(window->aspectRatio()));
         Core::Graphics::Renderer::Draw(*enty->getMesh(), *enty->getShader(), enty->getModel());
     }
+}
+
+void Scene::update() {
+    m_camera->update();
 }
 }

@@ -13,30 +13,35 @@
 #include "../core/Window/Window.hpp"
 #include "../core/Graphics/Renderer/Renderer.hpp"
 #include "../core/Graphics/Mesh/Cube.hpp"
-#include "../core/Graphics/Camera/Camera.hpp"
 #include "../core/Entity/Entity.hpp"
 #include "../core/Scene/Scene.hpp"
 #include "Camera/freeCam.hpp"
+
+Core::Entity* cube;
+Core::Render::Shader* shader;
 
 GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
     : m_window(window) {
     std::cout << "GameLogic started!" << std::endl;
 
     Core::Graphics::Mesh mesh = Core::Graphics::Cube::createMesh();
-    Core::Render::Shader shader("gameApp/shader/shader.vert", "gameApp/shader/shader.frag");
     glm::mat4 model = glm::mat4(1.0f);
 
-    // Core::Graphics::Camera camera = Core::Graphics::Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 60.0f, 0.1f, 100.0f);
     auto camera = std::make_unique<FreeCam>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 60.0f, 0.1f, 100.0f);
     auto scene = std::make_unique<Core::Scene>(std::move(camera));
 
-    auto cube = scene->createEntity(mesh, model, shader);
+    shader = scene->createShader("gameApp/shader/shader.vert", "gameApp/shader/shader.frag");
+    cube = scene->createEntity(mesh, model, *shader);
     cube->position.x = 2.0f;
 
     m_scenes.push_back(std::move(scene));
 }
 
 void GameLogic::onUpdate() {
+    for (auto &scene : m_scenes) {
+        scene->update();
+    }
+
     if (Core::Input::isKeyPressed(GLFW_KEY_ESCAPE)) {
         std::cout << "Escape pressed!" << std::endl;
         m_window->requestClose();
@@ -49,10 +54,8 @@ void GameLogic::onUpdate() {
         std::cout << "Left mouse button pressed!" << std::endl;
     }
 
-
-    m_scenes[0]->getCamera()->update();
-    m_scenes[0]->getEntities()[0]->rotation.y += 1.0f;
-    m_scenes[0]->getEntities()[0]->rotation.z += 0.5f;
+    cube->rotation.y += 1.0f;
+    cube->rotation.z += 0.5f;
 }
 
 void GameLogic::onRender() {
