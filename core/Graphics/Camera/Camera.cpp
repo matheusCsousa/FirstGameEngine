@@ -14,15 +14,14 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float fov, float nearPlane, flo
 }
 
 glm::mat4 Camera::calcViewMatrix() {
-    glm::vec3 front;
-
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
+    front = {
+        cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
+        sin(glm::radians(pitch)),
+        sin(glm::radians(yaw)) * cos(glm::radians(pitch))
+    };
     front = glm::normalize(front);
 
-    glm::vec3 right = glm::normalize(glm::cross(front, worldUp));
+    right = glm::normalize(glm::cross(front, worldUp));
     glm::vec3 up = glm::normalize(glm::cross(right, front));
 
     return glm::lookAt(position, position + front, up);

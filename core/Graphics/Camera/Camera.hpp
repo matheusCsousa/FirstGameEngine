@@ -5,8 +5,10 @@
 
 namespace Core::Graphics {
 class Camera {
-private:
+protected:
     glm::vec3 position;
+    glm::vec3 front;
+    glm::vec3 right;
     glm::vec3 worldUp;
 
     float yaw{0.0f};
@@ -21,6 +23,7 @@ public:
     Camera(glm::vec3 position, glm::vec3 up, float fov, float nearPlane, float farPlane);
     ~Camera() = default;
 
+    virtual void update() {};
     glm::mat4 calcViewMatrix();
     glm::mat4 calcProjectionMatrix(float aspectRatio);
 };

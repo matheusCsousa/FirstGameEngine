@@ -16,9 +16,7 @@
 #include "../core/Graphics/Camera/Camera.hpp"
 #include "../core/Entity/Entity.hpp"
 #include "../core/Scene/Scene.hpp"
-
-Core::Graphics::Camera camera;
-Core::Scene scene(camera);
+#include "Camera/freeCam.hpp"
 
 GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
     : m_window(window) {
@@ -28,9 +26,14 @@ GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
     Core::Render::Shader shader("gameApp/shader/shader.vert", "gameApp/shader/shader.frag");
     glm::mat4 model = glm::mat4(1.0f);
 
-    auto poly = scene.createEntity(mesh, model, shader);
+    // Core::Graphics::Camera camera = Core::Graphics::Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 60.0f, 0.1f, 100.0f);
+    auto camera = std::make_unique<FreeCam>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 60.0f, 0.1f, 100.0f);
+    auto scene = std::make_unique<Core::Scene>(std::move(camera));
 
-    camera = Core::Graphics::Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 60.0f, 0.1f, 100.0f);
+    auto cube = scene->createEntity(mesh, model, shader);
+    cube->position.x = 2.0f;
+
+    m_scenes.push_back(std::move(scene));
 }
 
 void GameLogic::onUpdate() {
@@ -46,16 +49,17 @@ void GameLogic::onUpdate() {
         std::cout << "Left mouse button pressed!" << std::endl;
     }
 
-    scene.getEntities()[0]->position.x = 2.0f;
-    scene.getEntities()[0]->rotation.y += 1.0f;
+
+    m_scenes[0]->getCamera()->update();
+    m_scenes[0]->getEntities()[0]->rotation.y += 1.0f;
+    m_scenes[0]->getEntities()[0]->rotation.z += 0.5f;
 }
 
 void GameLogic::onRender() {
     Core::Graphics::Renderer::Clear();
-    scene.getEntities()[0]->getShader()->activate();
-    scene.getEntities()[0]->getShader()->setMat4("view", camera.calcViewMatrix());
-    scene.getEntities()[0]->getShader()->setMat4("projection", camera.calcProjectionMatrix(m_window->aspectRatio()));
-    Core::Graphics::Renderer::Draw(*scene.getEntities()[0]->getMesh(), *scene.getEntities()[0]->getShader(), scene.getEntities()[0]->getModel());
+    for (auto &scene : m_scenes) {
+        scene->render(m_window.get());
+    }
 }
 
 GameLogic::~GameLogic() {
