@@ -3,7 +3,7 @@
 #include <string>
 #include <glm/glm.hpp>
 
-namespace Core::Renderer {
+namespace Core::Render {
 class Shader {
 public:
     unsigned int ID;

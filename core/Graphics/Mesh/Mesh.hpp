@@ -1,29 +1,32 @@
 #pragma once
 
-#include <vector>
+#include <memory>
+
+namespace Core::Render {
+    struct VAO;
+    struct VBO;
+    struct EBO;
+}
 
 namespace Core::Graphics {
-struct Vertex {
-    float position[3];
-    float color[3];
-    float texCoord[2];
-};
 
 class Mesh {
 private:
-    unsigned int vao = 0;
-    unsigned int vbo = 0;
-    unsigned int ebo = 0;
+    std::shared_ptr<Core::Render::VAO> m_vao;
+    std::shared_ptr<Core::Render::VBO> m_vbo;
+    std::shared_ptr<Core::Render::EBO> m_ebo;
 
-    unsigned int indexCount = 0;
+    int indexCount{};
 
 public:
     Mesh(
-        const std::vector<Vertex>& vertices,
-        const std::vector<unsigned int>& indices
+        const float* vertices,
+        size_t vertexSize,
+        const unsigned int* indices,
+        size_t indexSize
     );
 
-    ~Mesh();
+    ~Mesh() = default;
 
     void draw() const;
 

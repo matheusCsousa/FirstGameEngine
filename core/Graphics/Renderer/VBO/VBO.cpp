@@ -1,7 +1,9 @@
 #include "VBO.hpp"
 
-namespace Core::Renderer {
-VBO::VBO(const void* data, GLsizeiptr size) {
+#include <GL/glew.h>
+namespace Core::Render {
+
+VBO::VBO(const void* data, long size) {
     glGenBuffers(1, &ID);
 
     glBindBuffer(GL_ARRAY_BUFFER, ID);

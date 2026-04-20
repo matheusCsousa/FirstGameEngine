@@ -8,7 +8,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-namespace Core::Renderer {
+namespace Core::Render {
 
 static std::string ReadFile(const char* path) {
     std::ifstream file(path);
