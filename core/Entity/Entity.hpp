@@ -6,26 +6,36 @@
 #include "../Graphics/Renderer/Shader/Shader.hpp"
 #include "../Graphics/Mesh/Mesh.hpp"
 
+#include <vector>
+
 namespace Core {
+namespace Render {
+    class Texture;
+    class Shader;
+}
+namespace Graphics {
+    class Mesh;
+}
+
 class Entity {
 private:
-    Core::Graphics::Mesh m_mesh;
-    glm::mat4 m_model;
-    Core::Render::Shader m_shader;
+    std::shared_ptr<Core::Graphics::Mesh> m_mesh;
+    std::shared_ptr<Core::Render::Shader> m_shader;
+    std::vector<std::shared_ptr<Core::Render::Texture>> m_textures;
 
 public:
-    Entity();
-    Entity( Core::Graphics::Mesh mesh, glm::mat4 model, Core::Render::Shader shader);
+    Entity(std::shared_ptr<Core::Graphics::Mesh> mesh, std::shared_ptr<Core::Render::Shader> shader);
     ~Entity() = default;
 
     glm::vec3 position{};
     glm::vec3 rotation{};
     glm::vec3 scale{1.0f, 1.0f, 1.0f};
 
-    void update();
-    glm::mat4 getModel() const;
-    Core::Graphics::Mesh* getMesh();
-    Core::Render::Shader* getShader();
+    void addTexture(std::shared_ptr<Core::Render::Texture> texture);
+    const std::vector<std::shared_ptr<Core::Render::Texture>>& getTextures() const;
 
+    glm::mat4 getModel() const;
+    std::shared_ptr<Core::Graphics::Mesh> getMesh();
+    std::shared_ptr<Core::Render::Shader> getShader();
 };
 }

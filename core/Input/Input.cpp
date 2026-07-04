@@ -22,63 +22,76 @@ void Input::initialize(GLFWwindow* window) {
     Input::window = window;
     for (size_t i = 0; i < 1024; ++i) {
         keys[i] = Input::KEY_RELEASED;
+        mouseButtons[i] = Input::KEY_RELEASED;
     }
-    glfwSetKeyCallback(Input::window, handleKeyCallback);
-    glfwSetCursorPosCallback(Input::window, handleMouseCallback);
-    glfwSetMouseButtonCallback(Input::window, handleMouseButtonCallback);
 }
 
-void Input::handleKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    (void)window;
-    (void)scancode;
-    (void)mods;
-    if (action == Input::KEY_PRESSED) {
-        keys[key] = Input::KEY_PRESSED;
-    } else if (action == Input::KEY_RELEASED) {
-        keys[key] = Input::KEY_RELEASED;
-    }
+void Input::onEvent(Event& event) {
+    EventDispatcher dispatcher(event);
+
+    dispatcher.dispatch<KeyPressedEvent>([](KeyPressedEvent& e) {
+        if (e.getKeyCode() >= 0 && e.getKeyCode() < 1024) {
+            keys[e.getKeyCode()] = Input::KEY_PRESSED;
+        }
+        return false;
+    });
+
+    dispatcher.dispatch<KeyReleasedEvent>([](KeyReleasedEvent& e) {
+        if (e.getKeyCode() >= 0 && e.getKeyCode() < 1024) {
+            keys[e.getKeyCode()] = Input::KEY_RELEASED;
+        }
+        return false;
+    });
+
+    dispatcher.dispatch<MouseMovedEvent>([](MouseMovedEvent& e) {
+        if (Input::getMouseMode() == GLFW_CURSOR_DISABLED) {
+            if (Input::mouseFirstMoved) {
+                Input::lastX = e.getX();
+                Input::lastY = e.getY();
+                Input::mouseFirstMoved = false;
+            }
+            Input::xChange = e.getX() - Input::lastX;
+            Input::yChange = Input::lastY - e.getY();
+            Input::lastX = e.getX();
+            Input::lastY = e.getY();
+        } else {
+            Input::mouseFirstMoved = true;
+            Input::lastX = e.getX();
+            Input::lastY = e.getY();
+            Input::xChange = 0.0f;
+            Input::yChange = 0.0f;
+        }
+        return false;
+    });
+
+    dispatcher.dispatch<MouseButtonPressedEvent>([](MouseButtonPressedEvent& e) {
+        if (e.getMouseButton() >= 0 && e.getMouseButton() < 1024) {
+            mouseButtons[e.getMouseButton()] = Input::KEY_PRESSED;
+        }
+        return false;
+    });
+
+    dispatcher.dispatch<MouseButtonReleasedEvent>([](MouseButtonReleasedEvent& e) {
+        if (e.getMouseButton() >= 0 && e.getMouseButton() < 1024) {
+            mouseButtons[e.getMouseButton()] = Input::KEY_RELEASED;
+        }
+        return false;
+    });
 }
 
 bool Input::isKeyPressed(int key) {
+    if (key < 0 || key >= 1024) return false;
     return keys[key] == Input::KEY_PRESSED;
 }
 
 bool Input::isKeyHeld(int key) {
+    if (key < 0 || key >= 1024) return false;
     return keys[key] == Input::KEY_HELD;
 }
 
 Input::KeyState Input::getKeyState(int key) {
+    if (key < 0 || key >= 1024) return Input::KEY_RELEASED;
     return keys[key];
-}
-
-void Input::handleMouseCallback(GLFWwindow* window, double xpos, double ypos) {
-    if (Input::getMouseMode() == GLFW_CURSOR_DISABLED) {
-        if (Input::mouseFirstMoved) {
-            Input::lastX = xpos;
-            Input::lastY = ypos;
-            Input::mouseFirstMoved = false;
-        }
-        Input::xChange = xpos - Input::lastX;
-        Input::yChange = Input::lastY - ypos;
-        Input::lastX = xpos;
-        Input::lastY = ypos;
-    }
-    else {
-        Input::mouseFirstMoved = true;
-        Input::lastX = xpos;
-        Input::lastY = ypos;
-        Input::xChange = 0.0f;
-        Input::yChange = 0.0f;
-    }
-}
-
-void Input::handleMouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
-    if (action == Input::KEY_PRESSED) {
-        mouseButtons[button] = Input::KEY_PRESSED;
-    }
-    else if (action == Input::KEY_RELEASED) {
-        mouseButtons[button] = Input::KEY_RELEASED;
-    }
 }
 
 bool Input::isMouseButtonPressed(int button) {

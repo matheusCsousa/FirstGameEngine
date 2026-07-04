@@ -29,4 +29,6 @@ void FreeCam::update() {
     pitch += mouseChange.y * sensitivity;
     if (pitch >  89.0f) pitch =  89.0f;
     if (pitch < -89.0f) pitch = -89.0f;
+
+    updateCameraVectors();
 }

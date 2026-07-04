@@ -22,11 +22,12 @@ Mesh::Mesh(
     m_vao->bind();
     m_ebo->bind();
 
-    GLsizei stride = 8 * sizeof(float);
+    GLsizei stride = 11 * sizeof(float);
 
     m_vao->linkVBO(m_vbo, 0, 3, GL_FLOAT, stride, (void*)0);
     m_vao->linkVBO(m_vbo, 1, 3, GL_FLOAT, stride, (void*)(3 * sizeof(float)));
-    m_vao->linkVBO(m_vbo, 2, 2, GL_FLOAT, stride, (void*)(6 * sizeof(float)));
+    m_vao->linkVBO(m_vbo, 2, 3, GL_FLOAT, stride, (void*)(6 * sizeof(float)));
+    m_vao->linkVBO(m_vbo, 3, 2, GL_FLOAT, stride, (void*)(9 * sizeof(float)));
 
     m_vao->unbind();
 }

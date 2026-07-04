@@ -15,6 +15,27 @@ EBO::EBO(const void* data, long size) {
     );
 }
 
+EBO::~EBO() {
+    if (ID != 0) {
+        glDeleteBuffers(1, &ID);
+    }
+}
+
+EBO::EBO(EBO&& other) noexcept : ID(other.ID) {
+    other.ID = 0;
+}
+
+EBO& EBO::operator=(EBO&& other) noexcept {
+    if (this != &other) {
+        if (ID != 0) {
+            glDeleteBuffers(1, &ID);
+        }
+        ID = other.ID;
+        other.ID = 0;
+    }
+    return *this;
+}
+
 void EBO::bind() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ID);
 }

@@ -19,6 +19,8 @@ private:
     std::unique_ptr<Core::Logic> m_logic;
     std::shared_ptr<Core::Window> m_window;
 
+    void onEvent(Event& event);
+    bool onWindowClose(WindowCloseEvent& event);
 
 public:
     Game(GameSpecs& specs);
