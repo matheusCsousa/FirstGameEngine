@@ -37,6 +37,63 @@ void Window::create() {
     glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
 
+    glfwSetWindowSizeCallback(m_window, [](GLFWwindow* w, int width, int height) {
+        Window* win = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        win->m_specs.width = width;
+        win->m_specs.height = height;
+        if (win->m_eventCallback) {
+            WindowResizeEvent event(width, height);
+            win->m_eventCallback(event);
+        }
+    });
+
+    glfwSetWindowCloseCallback(m_window, [](GLFWwindow* w) {
+        Window* win = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        if (win->m_eventCallback) {
+            WindowCloseEvent event;
+            win->m_eventCallback(event);
+        }
+    });
+
+    glfwSetKeyCallback(m_window, [](GLFWwindow* w, int key, int scancode, int action, int mods) {
+        (void)scancode; (void)mods;
+        Window* win = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        if (win->m_eventCallback) {
+            if (action == GLFW_PRESS) {
+                KeyPressedEvent event(key, 0);
+                win->m_eventCallback(event);
+            } else if (action == GLFW_RELEASE) {
+                KeyReleasedEvent event(key);
+                win->m_eventCallback(event);
+            } else if (action == GLFW_REPEAT) {
+                KeyPressedEvent event(key, 1);
+                win->m_eventCallback(event);
+            }
+        }
+    });
+
+    glfwSetMouseButtonCallback(m_window, [](GLFWwindow* w, int button, int action, int mods) {
+        (void)mods;
+        Window* win = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        if (win->m_eventCallback) {
+            if (action == GLFW_PRESS) {
+                MouseButtonPressedEvent event(button);
+                win->m_eventCallback(event);
+            } else if (action == GLFW_RELEASE) {
+                MouseButtonReleasedEvent event(button);
+                win->m_eventCallback(event);
+            }
+        }
+    });
+
+    glfwSetCursorPosCallback(m_window, [](GLFWwindow* w, double xpos, double ypos) {
+        Window* win = static_cast<Window*>(glfwGetWindowUserPointer(w));
+        if (win->m_eventCallback) {
+            MouseMovedEvent event(static_cast<float>(xpos), static_cast<float>(ypos));
+            win->m_eventCallback(event);
+        }
+    });
+
     glewExperimental = GL_TRUE;
 
     if (glewInit() != GLEW_OK) {

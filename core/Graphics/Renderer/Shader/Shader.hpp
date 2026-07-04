@@ -6,9 +6,18 @@
 namespace Core::Render {
 class Shader {
 public:
-    unsigned int ID;
+    unsigned int ID = 0;
 
     Shader(const char* vertexPath, const char* fragmentPath);
+    ~Shader();
+
+    // Prevent copying
+    Shader(const Shader&) = delete;
+    Shader& operator=(const Shader&) = delete;
+
+    // Allow moving
+    Shader(Shader&& other) noexcept;
+    Shader& operator=(Shader&& other) noexcept;
 
     void activate() const;
     void del() const;
@@ -25,3 +34,4 @@ public:
     void setMat4(const std::string& name, const glm::mat4& matrix) const;
 };
 }
+

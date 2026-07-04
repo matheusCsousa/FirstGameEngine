@@ -18,6 +18,8 @@ protected:
     float nearPlane;
     float farPlane;
 
+    void updateCameraVectors();
+
 public:
     Camera() {}
     Camera(glm::vec3 position, glm::vec3 up, float fov, float nearPlane, float farPlane);
@@ -26,5 +28,6 @@ public:
     virtual void update() {};
     glm::mat4 calcViewMatrix();
     glm::mat4 calcProjectionMatrix(float aspectRatio);
+    glm::vec3 getPosition() const { return position; }
 };
 }

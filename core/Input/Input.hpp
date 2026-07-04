@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/vec2.hpp>
+#include "../Event/Event.hpp"
 
 struct GLFWwindow;
 
@@ -22,9 +23,7 @@ public:
 
     static void update();
 
-    static void handleKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    static void handleMouseCallback(GLFWwindow* window, double xpos, double ypos);
-    static void handleMouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void onEvent(Event& event);
 
     static void setMouseMode(bool disabled);
     static void toggleMouseMode();

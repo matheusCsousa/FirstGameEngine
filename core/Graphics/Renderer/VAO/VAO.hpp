@@ -6,9 +6,18 @@
 namespace Core::Render {
 class VAO {
 public:
-    unsigned int ID;
+    unsigned int ID = 0;
 
     VAO();
+    ~VAO();
+
+    // Prevent copying
+    VAO(const VAO&) = delete;
+    VAO& operator=(const VAO&) = delete;
+
+    // Allow moving
+    VAO(VAO&& other) noexcept;
+    VAO& operator=(VAO&& other) noexcept;
 
     void linkVBO(
         std::shared_ptr<VBO> vbo,

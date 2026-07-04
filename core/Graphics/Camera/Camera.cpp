@@ -11,19 +11,21 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float fov, float nearPlane, flo
         fov(fov),
         nearPlane(nearPlane),
         farPlane(farPlane) {
+    updateCameraVectors();
 }
 
-glm::mat4 Camera::calcViewMatrix() {
+void Camera::updateCameraVectors() {
     front = {
         cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
         sin(glm::radians(pitch)),
         sin(glm::radians(yaw)) * cos(glm::radians(pitch))
     };
     front = glm::normalize(front);
-
     right = glm::normalize(glm::cross(front, worldUp));
-    glm::vec3 up = glm::normalize(glm::cross(right, front));
+}
 
+glm::mat4 Camera::calcViewMatrix() {
+    glm::vec3 up = glm::normalize(glm::cross(right, front));
     return glm::lookAt(position, position + front, up);
 }
 
