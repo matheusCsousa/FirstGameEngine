@@ -1,151 +1,280 @@
 # FirstGameEngine
 
-A 3D game engine built from scratch in C++ using OpenGL, GLFW and GLEW. The project is split into two layers: a reusable `core` engine library and a `gameApp` application that consumes it.
+A modular 3D game engine built from scratch in **C++** using **OpenGL**, **GLFW**, and **GLEW**.
 
-![screenshot](/.github/images/cubogirando.png)
+The engine is designed with modularity in mind, separating reusable engine code from game-specific logic. Each engine subsystem is compiled as its own static library, making the project easy to extend and maintain.
+
+![Engine Screenshot](./.github/images/cubogirando.png)
+
+---
 
 ## Features
 
-- OpenGL rendering pipeline with VAO, VBO, EBO and shader management
-- First-person free camera with mouse look and delta-time movement
-- Scene and entity system with per-entity transform (position, rotation, scale)
-- Input system with key states (pressed / held / released) and mouse tracking
-- Abstract `Logic` interface to decouple game logic from the engine loop
-- CMake build system with each module compiled as a static library
+- Modern OpenGL rendering pipeline
+- Modular engine architecture
+- Scene and entity system
+- First-person free camera
+- Shader abstraction
+- Texture loading
+- OBJ mesh support
+- Asset management system
+- Keyboard and mouse input handling
+- Delta-time movement
+- Physics module *(work in progress)*
+- AABB collision primitives
+- CMake build system
+- Static library separation for engine modules
+
+---
 
 ## Project Structure
 
+```text
+FirstGameEngine/
+├── core/
+│   ├── AssetManager/
+│   ├── Collision/
+│   ├── Entity/
+│   ├── Event/
+│   ├── Game/
+│   ├── Graphics/
+│   │   ├── Camera/
+│   │   ├── Mesh/
+│   │   ├── Renderer/
+│   │   │   ├── Shader/
+│   │   │   ├── Texture/
+│   │   │   ├── VAO/
+│   │   │   ├── VBO/
+│   │   │   └── EBO/
+│   │   └── lib/
+│   ├── Input/
+│   ├── Logic/
+│   ├── Physics/
+│   ├── Scene/
+│   └── Window/
+│
+├── gameApp/
+│   ├── Camera/
+│   ├── models/
+│   ├── shader/
+│   ├── textures/
+│   ├── GameLogic.cpp
+│   └── main.cpp
+│
+├── CMakeLists.txt
+└── README.md
 ```
-game_engine/
-├── core/                      # Engine — compiled as static libraries
-│   ├── Game/                  # Game loop and entry point
-│   ├── Window/                # GLFW window management
-│   ├── Input/                 # Keyboard and mouse input
-│   ├── Logic/                 # Abstract interface for game logic
-│   ├── Scene/                 # Scene management (entities + camera)
-│   ├── Entity/                # Base game object with transform
-│   ├── Event/                 # Event system
-│   └── Graphics/
-│       ├── Camera/            # Base camera (view + projection matrices)
-│       ├── Mesh/              # Mesh base class + Cube primitive
-│       └── Renderer/
-│           ├── Shader/        # GLSL shader compilation and uniforms
-│           ├── VAO/           # Vertex Array Object
-│           ├── VBO/           # Vertex Buffer Object
-│           └── EBO/           # Element Buffer Object
-└── gameApp/                   # Sample application — compiled as executable
-    ├── main.cpp               # Entry point
-    ├── GameLogic.cpp/.hpp     # Implements Core::Logic
-    ├── Camera/freeCam.cpp     # First-person camera (extends Core::Camera)
-    └── shader/                # GLSL vertex and fragment shaders
-```
+
+---
 
 ## Architecture
 
-The engine enforces a clean separation between core systems and application logic through the `Core::Logic` interface:
+The engine is composed of independent modules that communicate through well-defined interfaces.
+
+```
+Application
+      │
+      ▼
+    Game Loop
+      │
+ ┌────┴──────────────────────────┐
+ │                               │
+ ▼                               ▼
+Input                         Scene
+ │                               │
+ ▼                               ▼
+Events                      Entities
+ │                               │
+ └──────────────┬────────────────┘
+                ▼
+            Renderer
+      ├── Shader
+      ├── Texture
+      ├── Mesh
+      ├── VAO
+      ├── VBO
+      └── EBO
+                │
+                ▼
+             OpenGL
+```
+
+Game-specific behavior is implemented by inheriting from the abstract `Logic` interface.
 
 ```cpp
-// core/Logic/Logic.hpp
-class Logic {
+class Logic
+{
 public:
     virtual void onUpdate() = 0;
     virtual void onRender() = 0;
 };
 ```
 
-The game loop in `Core::Game` calls `onUpdate()` and `onRender()` each frame. The application provides its own implementation:
+The engine owns the game loop while the application provides the gameplay implementation.
+
+---
+
+## Rendering
+
+The renderer currently provides abstractions for:
+
+- Vertex Array Objects (VAO)
+- Vertex Buffer Objects (VBO)
+- Element Buffer Objects (EBO)
+- GLSL shader management
+- Texture loading
+- Mesh rendering
+- View and projection matrices
+
+---
+
+## Camera
+
+The sample application includes a free-fly camera.
+
+| Input | Action |
+|-------|--------|
+| **W / S** | Move forward / backward |
+| **A / D** | Strafe left / right |
+| **Q / E** | Move down / up |
+| **Mouse** | Look around |
+| **F** | Toggle cursor capture |
+| **ESC** | Exit application |
+
+---
+
+## Asset Management
+
+The engine includes an AssetManager responsible for loading and organizing assets.
+
+Currently supported:
+
+- GLSL shaders
+- Textures
+- OBJ models
+
+---
+
+## Physics
+
+A dedicated physics module exists for future expansion.
+
+Current functionality includes:
+
+- Physics module
+- AABB collision primitives
+
+---
+
+## Input System
+
+The input system tracks multiple key states.
 
 ```cpp
-class GameLogic : public Core::Logic {
-    void onUpdate() override;
-    void onRender() override;
+enum KeyState
+{
+    KEY_RELEASED,
+    KEY_PRESSED,
+    KEY_HELD
 };
 ```
 
-### Camera System
-
-`Core::Graphics::Camera` is a base class that computes view and projection matrices. `FreeCam` extends it with WASD + QE movement and mouse-controlled yaw/pitch:
-
-| Key | Action |
-|-----|--------|
-| W / S | Move forward / backward |
-| A / D | Strafe left / right |
-| Q / E | Move down / up |
-| Mouse | Look around |
-| F | Toggle mouse capture |
-| Escape | Close window |
-
-### Input System
-
-`Core::Input` tracks three key states per key:
+Example usage:
 
 ```cpp
-enum KeyState { KEY_RELEASED, KEY_PRESSED, KEY_HELD };
+Input::isKeyPressed(GLFW_KEY_W);
+Input::isKeyHeld(GLFW_KEY_W);
 
-Core::Input::isKeyPressed(GLFW_KEY_W);  // true only on the frame it was pressed
-Core::Input::isKeyHeld(GLFW_KEY_W);     // true while held down
-Core::Input::getDeltaTime();            // frame delta for consistent movement speed
+float deltaTime = Input::getDeltaTime();
 ```
+
+---
 
 ## Dependencies
 
-- [GLFW](https://www.glfw.org/) — windowing and input
-- [GLEW](https://glew.sourceforge.net/) — OpenGL extension loading
-- [GLM](https://github.com/g-truc/glm) — math library (vectors, matrices)
-- [CMake](https://cmake.org/) 3.x+
+- OpenGL
+- GLFW
+- GLEW
+- GLM
+- stb_image
+- CMake (3.x or newer)
 
-GLFW and GLEW are vendored as static libraries under `core/Graphics/lib/`.
+GLFW and GLEW are included as static libraries under:
 
-## Running Without Building
-
-Download the latest pre-built binary from the [Releases](https://github.com/matheusCsousa/FirstGameEngine/releases) page.
-
-```bash
-chmod +x fersa
-./fersa
+```text
+core/Graphics/lib/
 ```
-
-> Linux only. Make sure you run the binary from the directory where the `gameApp/shader/` folder is located.
 
 ---
 
 ## Building
 
+Clone the repository:
+
 ```bash
 git clone https://github.com/matheusCsousa/FirstGameEngine.git
 cd FirstGameEngine
-mkdir build && cd build
+```
+
+Generate build files:
+
+```bash
+mkdir build
+cd build
+
 cmake ..
 make
 ```
 
-The executable is output to `build/gameApp/fersa`.
+The executable will be generated at:
+
+```text
+build/gameApp/fersa
+```
+
+---
 
 ## Running
+
+From the project root:
 
 ```bash
 ./build/gameApp/fersa
 ```
 
-> Shaders are loaded from relative paths, so run from the project root.
+---
 
-## Creating a New Application
+## Creating a Game
 
-1. Create a class that inherits `Core::Logic`
-2. Configure `Core::GameSpecs` and call `game.pushLogic<YourLogic>()`
+Create a class derived from `Core::Logic`.
+
+```cpp
+class MyGame : public Core::Logic
+{
+public:
+    void onUpdate() override;
+    void onRender() override;
+};
+```
+
+Then register it with the engine.
 
 ```cpp
 #include "core/Game/Game.hpp"
-#include "YourLogic.hpp"
+#include "MyGame.hpp"
 
-int main() {
+int main()
+{
     Core::GameSpecs specs;
+
     specs.title = "My Game";
     specs.windowSpec.width = 1280;
     specs.windowSpec.height = 720;
 
     Core::Game game(specs);
-    game.pushLogic<YourLogic>();
+
+    game.pushLogic<MyGame>();
+
     game.run();
 }
 ```
