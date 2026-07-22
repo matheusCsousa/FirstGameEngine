@@ -17,6 +17,7 @@
 #include "../core/Scene/Scene.hpp"
 #include "../core/Graphics/Renderer/Texture/Texture.hpp"
 #include "Camera/freeCam.hpp"
+#include <AABB.hpp>
 
 GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
     : m_window(window) {
@@ -27,15 +28,27 @@ GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
     auto scene = std::make_unique<Core::Scene>(std::move(camera));
     auto am = scene->getAssetManager();
 
-    auto mesh = am->registerMesh("cube_mesh", Core::Graphics::Cube::createMesh());
+    Core::Collision::AABB localAABB;
+    auto mesh = am->loadMeshFromOBJ("cube_mesh", "gameApp/models/cube.obj", localAABB);
     m_shader = am->loadShader("basic_shader", "gameApp/shader/shader.vert", "gameApp/shader/shader.frag");
     auto texture = am->loadTexture("brick_tex", "gameApp/textures/brick.jpg", "diffuse", 0);
 
     texture->texUnit(*m_shader, "tex0", 0);
 
     m_cube = scene->createEntity(mesh, m_shader);
-    m_cube->position.x = 2.0f;
+    m_cube->position = glm::vec3(0.0f, 4.0f, -4.0f);
+    m_cube->setLocalAABB(localAABB);
+    m_cube->mass = 1.0f;
+    m_cube->useGravity = true;
     m_cube->addTexture(texture);
+
+    m_obstacle = scene->createEntity(mesh, m_shader);
+    m_obstacle->position = glm::vec3(0.0f, -1.0f, -4.0f);
+    m_obstacle->scale = glm::vec3(3.0f, 0.2f, 3.0f);
+    m_obstacle->setLocalAABB(localAABB);
+    m_obstacle->mass = 0.0f;
+    m_obstacle->useGravity = false;
+    m_obstacle->addTexture(texture);
 
     m_scenes.push_back(std::move(scene));
 }
@@ -57,8 +70,14 @@ void GameLogic::onUpdate() {
         std::cout << "Left mouse button pressed!" << std::endl;
     }
 
-    m_cube->rotation.y += 1.0f;
-    m_cube->rotation.z += 0.5f;
+    // Print cube physics state
+    std::cout << "Cube Y: " << m_cube->position.y 
+              << " | Vel Y: " << m_cube->velocity.y << std::endl;
+
+    // Check collision!
+    if (m_cube->getWorldAABB().intersects(m_obstacle->getWorldAABB())) {
+        std::cout << "COLLISION DETECTED between falling cube and platform!" << std::endl;
+    }
 }
 
 void GameLogic::onRender() {

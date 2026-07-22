@@ -10,4 +10,6 @@ target_link_libraries(scene
   PUBLIC
   graphics
   entity
+  physics
+  input
 )

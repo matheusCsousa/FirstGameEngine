@@ -9,4 +9,5 @@ target_include_directories(entity PUBLIC
 target_link_libraries(entity
   PUBLIC
   graphics
+  collision
 )
