@@ -3,6 +3,8 @@
 #include "../Graphics/Renderer/Renderer.hpp"
 #include "../Graphics/Renderer/Texture/Texture.hpp"
 #include "../Window/Window.hpp"
+#include <Input.hpp>
+#include <Physics.hpp>
 
 namespace Core {
 
@@ -50,5 +52,6 @@ void Scene::render(Window* window) {
 
 void Scene::update() {
     m_camera->update();
+    Core::Physics::PhysicsEngine::update(Core::Input::getDeltaTime(), m_entities);
 }
 }

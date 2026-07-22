@@ -7,6 +7,7 @@
 #include "../Graphics/Renderer/Shader/Shader.hpp"
 #include "../Graphics/Renderer/Texture/Texture.hpp"
 #include "../Graphics/Mesh/Mesh.hpp"
+#include <AABB.hpp>
 
 namespace Core {
 
@@ -29,6 +30,7 @@ public:
     std::shared_ptr<Core::Graphics::Mesh> loadMesh(const std::string& name, const float* vertices, size_t vertexSize, const unsigned int* indices, size_t indexSize);
     std::shared_ptr<Core::Graphics::Mesh> registerMesh(const std::string& name, const Core::Graphics::Mesh& mesh);
     std::shared_ptr<Core::Graphics::Mesh> getMesh(const std::string& name);
+    std::shared_ptr<Core::Graphics::Mesh> loadMeshFromOBJ(const std::string& name, const std::string& filepath, Core::Collision::AABB& outLocalAABB);
 
     void clear();
 };

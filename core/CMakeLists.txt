@@ -6,6 +6,8 @@ add_subdirectory(Game)
 add_subdirectory(Event)
 add_subdirectory(Scene)
 add_subdirectory(AssetManager)
+add_subdirectory(Collision)
+add_subdirectory(Physics)
 
 add_library(core INTERFACE)
 
@@ -18,4 +20,7 @@ target_link_libraries(core INTERFACE
   event
   game
   asset_manager
+  collision
+  physics
 )
+

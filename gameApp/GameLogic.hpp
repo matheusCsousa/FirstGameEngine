@@ -22,6 +22,7 @@ private:
     std::vector<std::unique_ptr<Core::Scene>> m_scenes;
 
     Core::Entity* m_cube = nullptr;
+    Core::Entity* m_obstacle = nullptr;
     std::shared_ptr<Core::Render::Shader> m_shader;
 
 public:

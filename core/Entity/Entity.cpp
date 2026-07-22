@@ -49,4 +49,16 @@ void Entity::addTexture(std::shared_ptr<Core::Render::Texture> texture) {
 const std::vector<std::shared_ptr<Core::Render::Texture>>& Entity::getTextures() const {
     return m_textures;
 }
+
+Core::Collision::AABB Entity::getLocalAABB() const {
+    return m_localAABB;
+}
+
+Core::Collision::AABB Entity::getWorldAABB() const {
+    return m_localAABB.transform(getModel());
+}
+
+void Entity::setLocalAABB(const Core::Collision::AABB& aabb) {
+    m_localAABB = aabb;
+}
 }

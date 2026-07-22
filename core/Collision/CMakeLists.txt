@@ -1,0 +1,9 @@
+add_library(collision INTERFACE)
+
+target_include_directories(collision INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(collision INTERFACE
+  glm
+)
