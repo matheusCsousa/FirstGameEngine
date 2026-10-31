@@ -268,11 +268,15 @@ Builds now include **fersa_editor**, a separate Dear ImGui docking application:
 
 The editor opens a cube and ground scene. Select objects in Hierarchy; edit names, positions, rotations (degrees), and positive scales in Inspector. Create cubes, duplicate, reset transforms, and delete objects. The Scene panel renders to a resizing framebuffer. Hold the right mouse button over it to fly with WASD, Q/E for vertical movement, and Shift for speed. Release RMB or press Escape to release the camera.
 
-**Edits are session-only. Closing discards them.** Physics remains paused. Scene save/load, materials/assets UI, gizmos, undo/redo, and Play/Stop are future milestones. Selection currently happens through the hierarchy, not by clicking a mesh. Dock layouts reset on launch.
+Use **File > Save / Save as** (Ctrl+S / Ctrl+Shift+S) to write a scene; **Open** (Ctrl+O) restores it, and **New** (Ctrl+N) starts empty. The path dialog accepts a full path; its folder must already exist. Save as requires explicit replacement permission for an existing different file. An asterisk marks unsaved edits. New, Open, Exit, and the native close button offer Save/Discard/Cancel when needed. Failed saves keep the dirty state; failed opens preserve the current scene.
 
-Dear ImGui is pinned to `v1.92.0-docking`. An offline checkout can be supplied with `-DFERSA_IMGUI_SOURCE_DIR=/path/to/imgui`; use `-DFERSA_BUILD_EDITOR=OFF` to build only the runtime/sample. `FERSA_FETCH_DEPENDENCIES=OFF` controls the graphics libraries; the editor still needs ImGui source. The editor also accepts `--assets DIRECTORY` and `--smoke-test`, and receives its own copied assets next to the executable.
+Scene files use versioned JSON (`.fersa.json`) with IDs, names, transforms, asset references, and basic physics state. Version 1 supports the editor's cube/brick preset; unsupported asset references and malformed documents are rejected. Saves write a sibling temporary file before replacing the destination. See [SCENE-FORMAT.md](SCENE-FORMAT.md).
 
-Tests include stable IDs, duplicate independence, deletion lookup, and a hidden editor startup/render/shutdown check. See [EDITOR-MVP.md](EDITOR-MVP.md) for the remaining authoring workflow and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md) for the original engine audit.
+Drag transform fields horizontally or Ctrl+click to enter a number. Position and rotation accept negative values; scale stays between 0.01 and 1000. Physics remains paused. Materials/assets UI, scripting, gizmos, undo/redo, and Play/Stop are future milestones. Selection currently happens through the hierarchy, not by clicking a mesh. Dock layouts reset on launch.
+
+Dear ImGui is pinned to `v1.92.0-docking`. An offline checkout can be supplied with `-DFERSA_IMGUI_SOURCE_DIR=/path/to/imgui`; use `-DFERSA_BUILD_EDITOR=OFF` to build only the runtime/sample. `FERSA_FETCH_DEPENDENCIES=OFF` controls the graphics libraries; the editor still needs ImGui and nlohmann/json source. JSON is pinned to v3.11.3; an offline source tree can be supplied with CMake's `FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON`. The editor also accepts `--assets DIRECTORY` and `--smoke-test`, and receives its own copied assets next to the executable.
+
+Tests include stable/restored IDs, duplicate independence, deletion lookup, close cancellation, real ImGui transform drags, scene file round trips and invalid-input handling, and a hidden editor startup/render/shutdown check. See [EDITOR-MVP.md](EDITOR-MVP.md) for the remaining authoring workflow and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md) for the original engine audit.
 
 ---
 
