@@ -1,9 +1,14 @@
-cmake_minimum_required(VERSION 3.12)
-
-project(fersa VERSION 1.0 LANGUAGES CXX)
-
+cmake_minimum_required(VERSION 3.24)
+project(fersa VERSION 1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
+option(FERSA_FETCH_DEPENDENCIES "Fetch versioned GLFW, GLEW and GLM sources" ON)
+include(cmake/Dependencies.cmake)
 add_subdirectory(core)
 add_subdirectory(gameApp)
+include(CTest)
+if(BUILD_TESTING)
+  add_subdirectory(tests)
+endif()
