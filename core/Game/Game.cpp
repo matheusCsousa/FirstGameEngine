@@ -39,6 +39,10 @@ void Game::onEvent(Event& event) {
 
 bool Game::onWindowClose(WindowCloseEvent& event) {
     (void)event;
+    if (m_logic && !m_logic->onCloseRequested()) {
+        m_window->setShouldClose(false);
+        return true;
+    }
     m_window->requestClose();
     return true;
 }

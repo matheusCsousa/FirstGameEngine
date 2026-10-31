@@ -1,3 +1,4 @@
+#include "../core/Scene/Scene.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <Game.hpp>
@@ -20,6 +21,23 @@ void require(bool condition, const char* message) {
 static_assert(std::has_virtual_destructor_v<Core::Graphics::Camera>);
 static_assert(!std::is_copy_constructible_v<Core::Window>);
 static_assert(!std::is_move_constructible_v<Core::Window>);
+class CloseProbe final : public Core::Logic {
+    std::shared_ptr<Core::Window> window;
+    int& attempts;
+public:
+    CloseProbe(std::shared_ptr<Core::Window> window,int& attempts) : window(window),attempts(attempts) {}
+    bool onCloseRequested() override { return ++attempts>1; }
+    void onUpdate() override {
+        // Reproduce GLFW's native close semantics: it sets should-close before invoking the callback.
+        auto* native=window->getWindow();
+        auto callback=glfwSetWindowCloseCallback(native,nullptr);
+        glfwSetWindowCloseCallback(native,callback);
+        glfwSetWindowShouldClose(native,GLFW_TRUE);
+        callback(native);
+        require(window->shouldClose()==(attempts>1),"Application close veto was not respected");
+    }
+    void onRender() override {}
+};
 struct ProbeState { int updates = 0; int renders = 0; bool contextAtDestruction = false; };
 class Probe final : public Core::Logic {
     ProbeState& state;
@@ -89,6 +107,35 @@ void testWindows() {
 int main() {
     try {
         testWindows();
+        {
+            Core::Scene scene(std::make_unique<Core::Graphics::Camera>());
+            auto* original = scene.createEntity(nullptr, nullptr);
+            const auto originalId = original->id();
+            original->name = "Example"; original->position = {1,2,3}; original->useGravity = true;
+            auto* copy = scene.duplicateEntity(originalId);
+            const auto copyId = copy->id();
+            require(originalId != 0 && copyId != originalId, "Scene IDs must be unique and nonzero");
+            require(copy->name == "Example Copy" && copy->position == original->position && copy->useGravity,
+                    "Duplicate must preserve editable properties");
+            copy->position.x = 10;
+            require(original->position.x == 1, "Duplicate transforms must be independent");
+            require(scene.removeEntity(originalId) && !scene.findEntity(originalId), "Deleted selection must resolve to null");
+            require(!scene.removeEntity(originalId) && !scene.duplicateEntity(originalId), "Missing IDs must be handled safely");
+            require(scene.findEntity(copyId) == copy, "Removing another entity must preserve identity");
+            const auto replacementId = scene.createEntity(nullptr, nullptr)->id();
+            require(replacementId > copyId, "Deleted IDs must not be reused");
+            auto* restored=scene.createEntity(nullptr,nullptr,1000);
+            require(restored->id()==1000 && scene.createEntity(nullptr,nullptr)->id()>1000,"Restored IDs must advance the allocator");
+            bool duplicateRejected=false;
+            try { scene.createEntity(nullptr,nullptr,1000); } catch(const std::invalid_argument&) { duplicateRejected=true; }
+            require(duplicateRejected,"Restored duplicate IDs must be rejected");
+        }
+        {
+            int attempts=0;
+            Core::GameSpecs specs; specs.windowSpec.visible=false;
+            Core::Game game(specs); game.pushLogic<CloseProbe>(attempts); game.run(4);
+            require(attempts==2,"Close cancellation must allow later frames and a second close request");
+        }
         ProbeState state;
         {
             Core::GameSpecs specs;
