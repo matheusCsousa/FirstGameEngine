@@ -54,4 +54,8 @@ Play/Stop state isolation, transform gizmos, undo/redo, and physics/material ins
 - Smoke tests for startup, frame rendering, clean shutdown, and missing/invalid assets.
 - Editor checks for selection after deletion, invalid scene-file recovery, viewport resizing/minimization, camera input while typing, and Edit/Play/Stop state isolation.
 
-The runtime foundation is implemented. The editor-shell changes add named entities with stable scene-local IDs, safe removal/duplication, a separate docking editor, a live framebuffer viewport, and a transform inspector. Edits remain in memory, physics is paused, and the editor explicitly labels the session-only behavior. Scene persistence and the rest of the authoring workflow remain unimplemented.
+The runtime foundation is implemented. The editor-shell changes add named entities with stable scene-local IDs, safe removal/duplication, a separate docking editor, a live framebuffer viewport, and a transform inspector. Physics remains paused while authoring. Scene persistence is now implemented with versioned, validated files and dirty-state prompts; see SCENE-FORMAT.md. The remaining authoring workflow includes Play/Stop isolation, materials/assets, gizmos, undo/redo, and per-object scripting.
+
+## Per-object scripting (later milestone)
+
+Users should be able to attach scripts to scene objects and program their behavior. Plan a script component containing a portable script asset reference and editable properties, a runtime lifecycle (start/update/stop), access to the owning entity's transform, and useful error reporting. Scripts must run in the Play-mode scene copy so stopping restores authored state. Choose the scripting language and reload behavior in that milestone; no script execution or attachment UI is implemented yet. Extend the versioned scene format when script components are introduced.

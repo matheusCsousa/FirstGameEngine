@@ -18,3 +18,13 @@ if(FERSA_BUILD_EDITOR)
   set_tests_properties(editor_smoke PROPERTIES TIMEOUT 30
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/outside-working-directory")
 endif()
+
+if(FERSA_BUILD_EDITOR)
+  add_executable(scene_document_tests scene_document_tests.cpp)
+  target_link_libraries(scene_document_tests PRIVATE scene_document)
+  add_test(NAME scene_documents COMMAND scene_document_tests)
+  add_executable(editor_controls_tests editor_controls_tests.cpp)
+  target_link_libraries(editor_controls_tests PRIVATE editor_widgets)
+  add_test(NAME editor_controls COMMAND editor_controls_tests)
+  set_tests_properties(scene_documents editor_controls PROPERTIES TIMEOUT 30)
+endif()

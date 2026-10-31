@@ -6,6 +6,8 @@
 #include <Input.hpp>
 #include <Physics.hpp>
 #include <algorithm>
+#include <limits>
+#include <stdexcept>
 
 namespace Core {
 
@@ -16,13 +18,17 @@ Scene::Scene(std::unique_ptr<Core::Graphics::Camera> camera)
 
 Core::Entity* Scene::createEntity(
     std::shared_ptr<Core::Graphics::Mesh> mesh,
-    std::shared_ptr<Core::Render::Shader> shader
+    std::shared_ptr<Core::Render::Shader> shader, EntityId requestedId
 ) {
+    const auto id = requestedId ? requestedId : m_nextId;
+    if (id == std::numeric_limits<EntityId>::max() || findEntity(id))
+        throw std::invalid_argument("Entity ID is reserved or already in use");
     m_entities.push_back(
         std::make_unique<Core::Entity>(mesh, shader)
     );
 
-    m_entities.back()->m_id = m_nextId++;
+    m_entities.back()->m_id = id;
+    m_nextId = std::max(m_nextId, id + 1);
     return m_entities.back().get();
 }
 

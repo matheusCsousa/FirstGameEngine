@@ -21,6 +21,23 @@ void require(bool condition, const char* message) {
 static_assert(std::has_virtual_destructor_v<Core::Graphics::Camera>);
 static_assert(!std::is_copy_constructible_v<Core::Window>);
 static_assert(!std::is_move_constructible_v<Core::Window>);
+class CloseProbe final : public Core::Logic {
+    std::shared_ptr<Core::Window> window;
+    int& attempts;
+public:
+    CloseProbe(std::shared_ptr<Core::Window> window,int& attempts) : window(window),attempts(attempts) {}
+    bool onCloseRequested() override { return ++attempts>1; }
+    void onUpdate() override {
+        // Reproduce GLFW's native close semantics: it sets should-close before invoking the callback.
+        auto* native=window->getWindow();
+        auto callback=glfwSetWindowCloseCallback(native,nullptr);
+        glfwSetWindowCloseCallback(native,callback);
+        glfwSetWindowShouldClose(native,GLFW_TRUE);
+        callback(native);
+        require(window->shouldClose()==(attempts>1),"Application close veto was not respected");
+    }
+    void onRender() override {}
+};
 struct ProbeState { int updates = 0; int renders = 0; bool contextAtDestruction = false; };
 class Probe final : public Core::Logic {
     ProbeState& state;
@@ -107,6 +124,17 @@ int main() {
             require(scene.findEntity(copyId) == copy, "Removing another entity must preserve identity");
             const auto replacementId = scene.createEntity(nullptr, nullptr)->id();
             require(replacementId > copyId, "Deleted IDs must not be reused");
+            auto* restored=scene.createEntity(nullptr,nullptr,1000);
+            require(restored->id()==1000 && scene.createEntity(nullptr,nullptr)->id()>1000,"Restored IDs must advance the allocator");
+            bool duplicateRejected=false;
+            try { scene.createEntity(nullptr,nullptr,1000); } catch(const std::invalid_argument&) { duplicateRejected=true; }
+            require(duplicateRejected,"Restored duplicate IDs must be rejected");
+        }
+        {
+            int attempts=0;
+            Core::GameSpecs specs; specs.windowSpec.visible=false;
+            Core::Game game(specs); game.pushLogic<CloseProbe>(attempts); game.run(4);
+            require(attempts==2,"Close cancellation must allow later frames and a second close request");
         }
         ProbeState state;
         {
