@@ -3,9 +3,9 @@
 #include <memory>
 
 namespace Core::Render {
-    struct VAO;
-    struct VBO;
-    struct EBO;
+    class VAO;
+    class VBO;
+    class EBO;
 }
 
 namespace Core::Graphics {

@@ -5,7 +5,7 @@
 #include "../AssetManager/AssetManager.hpp"
 
 namespace Core {
-struct Window;
+class Window;
 
 class Scene {
 private:
