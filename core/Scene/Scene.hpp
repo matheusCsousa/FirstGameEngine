@@ -9,6 +9,7 @@ class Window;
 
 class Scene {
 private:
+    EntityId m_nextId = 1;
     std::unique_ptr<Core::Graphics::Camera> m_camera;
     std::vector<std::unique_ptr<Core::Entity>> m_entities;
     std::shared_ptr<Core::AssetManager> m_assetManager;
@@ -22,6 +23,10 @@ public:
 
     std::shared_ptr<Core::AssetManager> getAssetManager() { return m_assetManager; }
 
+    Entity* findEntity(EntityId id);
+    bool removeEntity(EntityId id);
+    Entity* duplicateEntity(EntityId id);
+    void render(float aspectRatio);
     void render(Window* window);
     void update();
 

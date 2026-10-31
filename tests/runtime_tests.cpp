@@ -1,3 +1,4 @@
+#include "../core/Scene/Scene.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <Game.hpp>
@@ -89,6 +90,24 @@ void testWindows() {
 int main() {
     try {
         testWindows();
+        {
+            Core::Scene scene(std::make_unique<Core::Graphics::Camera>());
+            auto* original = scene.createEntity(nullptr, nullptr);
+            const auto originalId = original->id();
+            original->name = "Example"; original->position = {1,2,3}; original->useGravity = true;
+            auto* copy = scene.duplicateEntity(originalId);
+            const auto copyId = copy->id();
+            require(originalId != 0 && copyId != originalId, "Scene IDs must be unique and nonzero");
+            require(copy->name == "Example Copy" && copy->position == original->position && copy->useGravity,
+                    "Duplicate must preserve editable properties");
+            copy->position.x = 10;
+            require(original->position.x == 1, "Duplicate transforms must be independent");
+            require(scene.removeEntity(originalId) && !scene.findEntity(originalId), "Deleted selection must resolve to null");
+            require(!scene.removeEntity(originalId) && !scene.duplicateEntity(originalId), "Missing IDs must be handled safely");
+            require(scene.findEntity(copyId) == copy, "Removing another entity must preserve identity");
+            const auto replacementId = scene.createEntity(nullptr, nullptr)->id();
+            require(replacementId > copyId, "Deleted IDs must not be reused");
+        }
         ProbeState state;
         {
             Core::GameSpecs specs;
