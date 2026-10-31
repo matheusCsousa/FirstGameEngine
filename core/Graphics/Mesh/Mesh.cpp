@@ -16,11 +16,10 @@ Mesh::Mesh(
 )
     : indexCount(indexSize / sizeof(unsigned int)),
       m_vao(std::make_shared<Core::Render::VAO>()),
-      m_vbo(std::make_shared<Core::Render::VBO>(vertices, vertexSize)),
-      m_ebo(std::make_shared<Core::Render::EBO>(indices, indexSize))
+      m_vbo(std::make_shared<Core::Render::VBO>(vertices, vertexSize))
 {
     m_vao->bind();
-    m_ebo->bind();
+    m_ebo = std::make_shared<Core::Render::EBO>(indices, indexSize);
 
     GLsizei stride = 11 * sizeof(float);
 

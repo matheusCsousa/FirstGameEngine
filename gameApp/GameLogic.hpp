@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <filesystem>
 #include <vector>
 
 #include <glm/mat4x4.hpp>
@@ -26,7 +27,7 @@ private:
     std::shared_ptr<Core::Render::Shader> m_shader;
 
 public:
-    GameLogic(std::shared_ptr<Core::Window> window);
+    GameLogic(std::shared_ptr<Core::Window> window, const std::filesystem::path& assets = "gameApp");
     ~GameLogic();
 
     void onUpdate() override;

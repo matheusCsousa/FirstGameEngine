@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../Entity/Entity.hpp"
-#include "../Camera/Camera.hpp"
+#include "../Graphics/Camera/Camera.hpp"
 #include "../AssetManager/AssetManager.hpp"
 
 namespace Core {
-struct Window;
+class Window;
 
 class Scene {
 private:
