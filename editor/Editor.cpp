@@ -1,5 +1,6 @@
 #include "Editor.hpp"
 #include "TransformControls.hpp"
+#include "../core/Input/Input.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
@@ -59,9 +60,11 @@ Editor::Editor(std::shared_ptr<Core::Window> target, const std::filesystem::path
     cubeMesh = mesh; cubeShader = shader; cubeTexture = texture; cubeBounds = bounds;
     auto cube = scene->createEntity(mesh, shader);
     cube->name = "Cube"; cube->position = {0,1,0}; cube->setLocalAABB(bounds); cube->addTexture(texture);
+    cube->mass=1; cube->useGravity=true;
     selected = cube->id();
     auto ground = scene->duplicateEntity(selected);
     ground->name = "Ground"; ground->position = {0,-1,0}; ground->scale = {5,0.2f,5};
+    ground->mass=0; ground->useGravity=false;
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     auto& io = ImGui::GetIO();
@@ -82,6 +85,7 @@ Editor::Editor(std::shared_ptr<Core::Window> target, const std::filesystem::path
 Editor::~Editor() {
     releaseNavigation();
     glDeleteFramebuffers(1, &framebuffer); glDeleteTextures(1, &color); glDeleteRenderbuffers(1, &depth);
+    play.stop();
     scene.reset();
     ImGui_ImplOpenGL3_Shutdown(); ImGui_ImplGlfw_Shutdown(); ImGui::DestroyContext();
 }
@@ -117,6 +121,22 @@ void Editor::createCube() {
     selected = cube->id();
     dirty = true;
 }
+void Editor::startPlay() {
+    if (play.isPlaying()) return;
+    releaseNavigation();
+    try {
+        play.start(*scene,std::make_unique<EditorCamera>(*static_cast<EditorCamera*>(scene->getCamera())));
+        status="Physics preview: edits and saving are disabled. Stop restores the authored scene.";
+    } catch (const std::exception& error) { status="Cannot start preview: "+std::string(error.what()); }
+}
+void Editor::stopPlay() {
+    if (!play.isPlaying()) return;
+    releaseNavigation(); play.stop();
+    status="Stopped: authored scene restored.";
+}
+void Editor::onUpdate() {
+    if (play.isPlaying()) play.advance(Core::Input::getDeltaTime());
+}
 void Editor::onRender() {
     ImGui_ImplOpenGL3_NewFrame(); ImGui_ImplGlfw_NewFrame(); ImGui::NewFrame();
     if (navigating && (!ImGui::IsMouseDown(ImGuiMouseButton_Right) ||
@@ -128,20 +148,24 @@ void Editor::onRender() {
     ImGui::DockSpaceOverViewport(dock, viewport);
     ImGui::Begin("Hierarchy");
     ImGui::TextWrapped("%s%s", currentPath.empty() ? "Untitled scene" : currentPath.filename().string().c_str(), dirty ? " *" : "");
+    ImGui::BeginDisabled(play.isPlaying());
     if (ImGui::Button("+ Cube")) createCube();
+    ImGui::EndDisabled();
     ImGui::Separator();
-    for (auto& entity : scene->getEntities()) {
+    for (auto& entity : displayedScene().getEntities()) {
         ImGui::PushID(std::to_string(entity->id()).c_str());
         if (ImGui::Selectable((entity->name.empty() ? "(unnamed)" : entity->name.c_str()), selected == entity->id())) selected = entity->id();
         ImGui::PopID();
     }
-    ImGui::Spacing(); ImGui::TextDisabled("%zu objects", scene->getEntities().size());
-    ImGui::TextWrapped("Editing mode: physics paused.");
+    ImGui::Spacing(); ImGui::TextDisabled("%zu objects", displayedScene().getEntities().size());
+    ImGui::TextWrapped("%s", play.isPlaying() ? (play.isPaused() ? "Preview paused" : "Physics preview running") : "Editing mode: physics paused.");
     ImGui::TextWrapped("%s", dirty ? "Unsaved changes" : "No unsaved changes");
     if (!status.empty()) ImGui::TextWrapped("%s", status.c_str());
     ImGui::End();
     ImGui::Begin("Inspector");
-    if (auto* entity = scene->findEntity(selected)) {
+    if (auto* entity = displayedScene().findEntity(selected)) {
+        if (play.isPlaying()) ImGui::TextWrapped("Runtime values (read only). Stop to edit.");
+        ImGui::BeginDisabled(play.isPlaying());
         ImGui::TextDisabled("OBJECT");
         ImGui::PushID(std::to_string(selected).c_str());
         dirty |= ImGui::InputText("Name", &entity->name);
@@ -152,11 +176,23 @@ void Editor::onRender() {
         dirty |= EditorWidgets::editVector("Scale", entity->scale, 0.01f, true);
         ImGui::TextWrapped("Drag values horizontally, or Ctrl+click to type. Axes: X / Y / Z.");
         if (ImGui::Button("Reset transform")) { entity->position={}; entity->rotation={}; entity->scale={1,1,1}; dirty=true; }
+        ImGui::SeparatorText("Physics");
+        const float previousMass=entity->mass;
+        if (ImGui::DragFloat("Mass (kg)",&entity->mass,0.1f,0,1000000,"%.2f",ImGuiSliderFlags_AlwaysClamp)) {
+            if (!std::isfinite(entity->mass)) entity->mass=previousMass;
+            dirty |= entity->mass!=previousMass;
+        }
+        dirty |= ImGui::Checkbox("Use gravity",&entity->useGravity);
+        ImGui::TextWrapped("Mass 0 is static. Set mass above 0 for movement.");
+        ImGui::TextUnformatted(play.isPlaying() ? "Velocity (X / Y / Z)" : "Initial velocity (X / Y / Z)");
+        ImGui::SetNextItemWidth(-1);
+        dirty |= EditorWidgets::editVector("##Velocity",entity->velocity,0.1f);
         ImGui::Separator();
         if (ImGui::Button("Duplicate")) { selected = scene->duplicateEntity(selected)->id(); dirty=true; }
         // Read selection again next frame: no raw pointer survives deletion.
         if (ImGui::Button("Delete")) { scene->removeEntity(selected); selected = 0; dirty=true; }
         ImGui::PopID();
+        ImGui::EndDisabled();
     } else { selected = 0; ImGui::TextWrapped("Select an object in the hierarchy to edit its transform."); }
     ImGui::End();
     bool sceneVisible = ImGui::Begin("Scene");
@@ -168,10 +204,10 @@ void Editor::onRender() {
         ImGui::Image(static_cast<ImTextureID>(color), available, {0,1}, {1,0});
         bool started = !navigating && ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !io.WantTextInput;
         if (started) { navigating = true; glfwSetInputMode(window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED); }
-        if (navigating) static_cast<EditorCamera*>(scene->getCamera())->navigate(io.DeltaTime, started ? ImVec2{} : io.MouseDelta);
+        if (navigating) static_cast<EditorCamera*>(displayedScene().getCamera())->navigate(io.DeltaTime, started ? ImVec2{} : io.MouseDelta);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); glViewport(0,0,width,height);
         glEnable(GL_DEPTH_TEST); glClearColor(0.10f,0.12f,0.16f,1); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        scene->render(static_cast<float>(width)/height);
+        displayedScene().render(static_cast<float>(width)/height);
         glBindFramebuffer(GL_FRAMEBUFFER,0);
     } else releaseNavigation();
     ImGui::End();
@@ -188,12 +224,14 @@ std::string pathText(const std::filesystem::path& path) {
 }
 void Editor::request(Action action) {
     if (pending != Action::None || fileMode != FileMode::None) return;
+    stopPlay();
     releaseNavigation();
     pending=action;
     if (dirty) showUnsaved=true;
     else executePending();
 }
 bool Editor::onCloseRequested() {
+    stopPlay();
     if (!dirty && pending==Action::None && fileMode==FileMode::None) return true;
     request(Action::Close);
     return false;
@@ -212,6 +250,7 @@ void Editor::openFileDialog(FileMode mode) {
     pathInput=pathText(currentPath.empty() ? std::filesystem::current_path()/"scene.fersa.json" : currentPath);
 }
 bool Editor::saveTo(const std::filesystem::path& path) {
+    if (play.isPlaying()) { status="Stop the preview before saving."; return false; }
     try {
         const auto resolved=std::filesystem::absolute(path).lexically_normal();
         EditorFiles::write(resolved,EditorFiles::capture(*scene));
@@ -243,20 +282,34 @@ void Editor::fileControls() {
     };
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            ImGui::BeginDisabled(busy);
+            ImGui::BeginDisabled(busy || play.isPlaying());
             if (ImGui::MenuItem("New scene","Ctrl+N")) request(Action::New);
             if (ImGui::MenuItem("Open...","Ctrl+O")) request(Action::Open);
             if (ImGui::MenuItem("Save","Ctrl+S")) save();
             if (ImGui::MenuItem("Save as...","Ctrl+Shift+S")) openFileDialog(FileMode::Save);
             ImGui::Separator();
-            if (ImGui::MenuItem("Exit")) request(Action::Close);
-            ImGui::EndDisabled(); ImGui::EndMenu();
+            ImGui::EndDisabled();
+            if (ImGui::MenuItem("Exit",nullptr,false,!busy)) request(Action::Close);
+            ImGui::EndMenu();
         }
-        ImGui::TextDisabled("  FERSA  /  EDIT MODE%s", dirty ? "  /  UNSAVED" : "");
+        ImGui::BeginDisabled(busy);
+        if (!play.isPlaying()) {
+            if (ImGui::Button("Play")) startPlay();
+        } else {
+            if (ImGui::Button("Stop")) stopPlay();
+            if (play.isPlaying()) {
+                if (ImGui::Button(play.isPaused() ? "Resume" : "Pause")) play.setPaused(!play.isPaused());
+                ImGui::BeginDisabled(!play.isPaused());
+                if (ImGui::Button("Step")) play.step();
+                ImGui::EndDisabled();
+            }
+        }
+        ImGui::EndDisabled();
+        ImGui::TextDisabled("  FERSA  /  %s%s", play.isPlaying() ? (play.isPaused() ? "PAUSED" : "PHYSICS PREVIEW") : "EDIT MODE", dirty ? "  /  UNSAVED" : "");
         ImGui::EndMainMenuBar();
     }
     auto& io=ImGui::GetIO();
-    if (!busy && !navigating && io.KeyCtrl) {
+    if (!busy && !play.isPlaying() && !navigating && io.KeyCtrl) {
         if (ImGui::IsKeyPressed(ImGuiKey_S,false)) { if (io.KeyShift) openFileDialog(FileMode::Save); else save(); }
         else if (!io.WantTextInput && ImGui::IsKeyPressed(ImGuiKey_O,false)) request(Action::Open);
         else if (!io.WantTextInput && ImGui::IsKeyPressed(ImGuiKey_N,false)) request(Action::New);
@@ -302,6 +355,6 @@ void Editor::fileControls() {
         }
         ImGui::EndPopup();
     }
-    const auto title="Fersa - "+(currentPath.empty() ? std::string("Untitled scene") : pathText(currentPath.filename()))+(dirty ? " *" : "");
+    const auto title="Fersa - "+(currentPath.empty() ? std::string("Untitled scene") : pathText(currentPath.filename()))+(dirty ? " *" : "")+(play.isPlaying() ? " [Preview]" : "");
     glfwSetWindowTitle(window->getWindow(),title.c_str());
 }

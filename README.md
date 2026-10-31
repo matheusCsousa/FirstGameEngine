@@ -253,7 +253,7 @@ Graphics tests require a working OpenGL 3.3 context. Linux CI runs them under Xv
 xvfb-run -a ctest --test-dir build --output-on-failure
 ```
 
-Checks cover initialization validation, multiple-window GLFW lifetime, running without application logic, bounded updates/rendering, releasing application logic with its context still current, idempotent GPU deletion, mesh index-buffer ownership, sample asset resolution from another directory, missing assets, and Linux startup without a display. Windows CI builds the engine and runs the display-independent missing-assets check; run the graphics checks locally with an OpenGL-capable driver.
+Checks cover initialization validation, multiple-window GLFW lifetime, running without application logic, bounded updates/rendering, releasing application logic with its context still current, idempotent GPU deletion, mesh index-buffer ownership, sample asset resolution from another directory, missing assets, and Linux startup without a display. Windows CI builds the engine and runs the display-independent missing-assets, scene-document, transform-control, and play-session checks; run the graphics checks locally with an OpenGL-capable driver.
 
 ## Editor direction
 
@@ -272,11 +272,15 @@ Use **File > Save / Save as** (Ctrl+S / Ctrl+Shift+S) to write a scene; **Open**
 
 Scene files use versioned JSON (`.fersa.json`) with IDs, names, transforms, asset references, and basic physics state. Version 1 supports the editor's cube/brick preset; unsupported asset references and malformed documents are rejected. Saves write a sibling temporary file before replacing the destination. See [SCENE-FORMAT.md](SCENE-FORMAT.md).
 
-Drag transform fields horizontally or Ctrl+click to enter a number. Position and rotation accept negative values; scale stays between 0.01 and 1000. Physics remains paused. Materials/assets UI, scripting, gizmos, undo/redo, and Play/Stop are future milestones. Selection currently happens through the hierarchy, not by clicking a mesh. Dock layouts reset on launch.
+Drag transform fields horizontally or Ctrl+click to enter a number. Position and rotation accept negative values; scale stays between 0.01 and 1000. Physics remains paused in Edit mode. Set an object's mass above zero and enable gravity in Inspector, then press **Play** in the top bar. The initial sample already contains a falling cube and static ground. **Pause/Resume** freezes/resumes preview; **Step** advances one 1/120-second physics tick while paused. **Stop** discards the runtime copy and restores authored transforms, velocities, and camera state. The preview does not mark the document dirty or change saved files.
+
+Object and physics editing, New/Open, and saving are disabled during preview. Close/Exit stops preview first, then protects any unsaved authored changes. You can still select objects and navigate the runtime camera. The inspector displays runtime values read-only; stop to change mass, gravity, or initial velocity.
+
+Preview physics uses a 120 Hz fixed timestep with at most eight catch-up ticks per frame. Large frame delays are discarded rather than causing a large simulation jump. This applies to the editor preview; the legacy runtime sample still uses its existing variable update. Collisions use the existing simple world-AABB solver, with corrected equal-penetration axis selection. Scripts, materials/assets UI, gizmos, and undo/redo remain future milestones. Selection currently happens through the hierarchy, not by clicking a mesh. Dock layouts reset on launch.
 
 Dear ImGui is pinned to `v1.92.0-docking`. An offline checkout can be supplied with `-DFERSA_IMGUI_SOURCE_DIR=/path/to/imgui`; use `-DFERSA_BUILD_EDITOR=OFF` to build only the runtime/sample. `FERSA_FETCH_DEPENDENCIES=OFF` controls the graphics libraries; the editor still needs ImGui and nlohmann/json source. JSON is pinned to v3.11.3; an offline source tree can be supplied with CMake's `FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON`. The editor also accepts `--assets DIRECTORY` and `--smoke-test`, and receives its own copied assets next to the executable.
 
-Tests include stable/restored IDs, duplicate independence, deletion lookup, close cancellation, real ImGui transform drags, scene file round trips and invalid-input handling, and a hidden editor startup/render/shutdown check. See [EDITOR-MVP.md](EDITOR-MVP.md) for the remaining authoring workflow and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md) for the original engine audit.
+Tests include stable/restored IDs, duplicate independence, deletion lookup, close cancellation, play-copy isolation, pause/resume/step, fixed-step frame-rate consistency, collision ties/ground landing, real ImGui transform drags, scene file round trips and invalid-input handling, and a hidden editor startup/render/shutdown check. See [EDITOR-MVP.md](EDITOR-MVP.md) for the remaining authoring workflow and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md) for the original engine audit.
 
 ---
 

@@ -4,6 +4,7 @@
 #include "../core/Window/Window.hpp"
 #include <filesystem>
 #include "SceneDocument.hpp"
+#include "PlaySession.hpp"
 
 class Editor final : public Core::Logic {
     std::shared_ptr<Core::Window> window;
@@ -12,6 +13,10 @@ class Editor final : public Core::Logic {
     std::shared_ptr<Core::Render::Shader> cubeShader;
     std::shared_ptr<Core::Render::Texture> cubeTexture;
     Core::Collision::AABB cubeBounds;
+    PlaySession play;
+    void startPlay();
+    void stopPlay();
+    Core::Scene& displayedScene() { return play.isPlaying() ? *play.scene() : *scene; }
     Core::EntityId selected = 0;
     unsigned framebuffer = 0, color = 0, depth = 0;
     int width = 0, height = 0;
@@ -37,6 +42,6 @@ public:
     Editor(std::shared_ptr<Core::Window> window, const std::filesystem::path& assets);
     ~Editor() override;
     bool onCloseRequested() override;
-    void onUpdate() override {}
+    void onUpdate() override;
     void onRender() override;
 };
