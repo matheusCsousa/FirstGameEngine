@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "SceneDocument.hpp"
 #include "PlaySession.hpp"
+#include "EditHistory.hpp"
 
 class Editor final : public Core::Logic {
     std::shared_ptr<Core::Window> window;
@@ -13,6 +14,15 @@ class Editor final : public Core::Logic {
     std::shared_ptr<Core::Render::Shader> cubeShader;
     std::shared_ptr<Core::Render::Texture> cubeTexture;
     Core::Collision::AABB cubeBounds;
+    EditHistory history;
+    bool gizmoUsing=false, editFinished=false;
+    enum class TransformTool { Move, Rotate, Scale };
+    TransformTool transformTool=TransformTool::Move;
+    bool localSpace=true;
+    void flushHistory();
+    void restoreHistory(bool redo);
+    void viewportTools(glm::vec2 origin,glm::vec2 size,bool hovered);
+    std::unique_ptr<Core::Scene> makeScene(const EditorFiles::Document& document,std::unique_ptr<Core::Graphics::Camera> camera);
     PlaySession play;
     void startPlay();
     void stopPlay();

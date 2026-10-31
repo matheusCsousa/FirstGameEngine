@@ -14,8 +14,9 @@ struct Object {
     glm::vec3 position{}, rotation{}, scale{1,1,1}, velocity{}, acceleration{};
     float mass = 0;
     bool gravity = false;
+    bool operator==(const Object&) const = default;
 };
-struct Document { std::vector<Object> objects; };
+struct Document { std::vector<Object> objects; bool operator==(const Document&) const = default; };
 Document capture(const Core::Scene& scene);
 std::string encode(const Document& document);
 Document decode(const std::string& text);

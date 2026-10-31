@@ -14,6 +14,14 @@ add_library(editor_ui STATIC
   ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
 target_include_directories(editor_ui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends ${imgui_SOURCE_DIR}/misc/cpp)
 target_link_libraries(editor_ui PUBLIC engine_dependencies)
+FetchContent_Declare(imguizmo
+  URL https://github.com/CedricGuillemet/ImGuizmo/archive/105e4fde45e4e74aae8973d98750820ef7aca7e2.tar.gz
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  SOURCE_SUBDIR fersa-source-only)
+FetchContent_MakeAvailable(imguizmo)
+add_library(editor_gizmo STATIC ${imguizmo_SOURCE_DIR}/src/ImGuizmo.cpp)
+target_include_directories(editor_gizmo PUBLIC ${imguizmo_SOURCE_DIR}/src)
+target_link_libraries(editor_gizmo PUBLIC editor_ui)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 FetchContent_Declare(nlohmann_json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
 FetchContent_MakeAvailable(nlohmann_json)
@@ -26,8 +34,11 @@ target_link_libraries(editor_widgets PUBLIC editor_ui core)
 add_library(editor_play STATIC PlaySession.cpp)
 target_include_directories(editor_play PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(editor_play PUBLIC core)
+add_library(editor_authoring STATIC EditorMath.cpp EditHistory.cpp)
+target_include_directories(editor_authoring PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(editor_authoring PUBLIC scene_document)
 add_executable(fersa_editor main.cpp Editor.cpp)
-target_link_libraries(fersa_editor PRIVATE core editor_ui scene_document editor_widgets editor_play)
+target_link_libraries(fersa_editor PRIVATE core editor_ui scene_document editor_widgets editor_play editor_gizmo editor_authoring)
 foreach(asset_directory models shader textures)
   add_custom_command(TARGET fersa_editor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/gameApp/${asset_directory}"

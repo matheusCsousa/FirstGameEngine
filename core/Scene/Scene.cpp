@@ -40,6 +40,8 @@ Core::Graphics::Camera* Scene::getCamera() {
     return m_camera.get();
 }
 
+void Scene::preserveEntityIdsFrom(const Scene& other) { m_nextId=std::max(m_nextId,other.m_nextId); }
+
 Entity* Scene::findEntity(EntityId id) {
     for (auto& entity : m_entities) if (entity->id() == id) return entity.get();
     return nullptr;
