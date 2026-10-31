@@ -28,6 +28,7 @@ public:
     Entity* findEntity(EntityId id);
     bool removeEntity(EntityId id);
     Entity* duplicateEntity(EntityId id);
+    std::unique_ptr<Scene> clone(std::unique_ptr<Core::Graphics::Camera> camera) const;
     void render(float aspectRatio);
     void render(Window* window);
     void update();

@@ -23,8 +23,11 @@ target_link_libraries(scene_document PUBLIC core nlohmann_json::nlohmann_json)
 add_library(editor_widgets STATIC TransformControls.cpp)
 target_include_directories(editor_widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(editor_widgets PUBLIC editor_ui core)
+add_library(editor_play STATIC PlaySession.cpp)
+target_include_directories(editor_play PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(editor_play PUBLIC core)
 add_executable(fersa_editor main.cpp Editor.cpp)
-target_link_libraries(fersa_editor PRIVATE core editor_ui scene_document editor_widgets)
+target_link_libraries(fersa_editor PRIVATE core editor_ui scene_document editor_widgets editor_play)
 foreach(asset_directory models shader textures)
   add_custom_command(TARGET fersa_editor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/gameApp/${asset_directory}"
