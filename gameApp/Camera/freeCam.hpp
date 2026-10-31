@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "../Graphics/Camera/Camera.hpp"
+#include "../../core/Graphics/Camera/Camera.hpp"
 
 class FreeCam : public Core::Graphics::Camera {
 private:

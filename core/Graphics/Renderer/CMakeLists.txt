@@ -15,3 +15,5 @@ target_include_directories(renderer PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/Shader
   ${CMAKE_CURRENT_SOURCE_DIR}/Texture
 )
+
+target_link_libraries(renderer PUBLIC engine_dependencies)

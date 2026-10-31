@@ -6,3 +6,5 @@ add_library(mesh
 target_include_directories(mesh PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+target_link_libraries(mesh PUBLIC engine_dependencies)

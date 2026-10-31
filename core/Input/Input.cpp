@@ -20,6 +20,10 @@ GLFWwindow* Input::window{nullptr};
 
 void Input::initialize(GLFWwindow* window) {
     Input::window = window;
+    lastTime = window ? static_cast<float>(glfwGetTime()) : 0.0f;
+    deltaTime = 0.0f;
+    xChange = yChange = lastX = lastY = 0.0;
+    mouseFirstMoved = true;
     for (size_t i = 0; i < 1024; ++i) {
         keys[i] = Input::KEY_RELEASED;
         mouseButtons[i] = Input::KEY_RELEASED;

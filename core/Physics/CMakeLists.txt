@@ -10,5 +10,5 @@ target_link_libraries(physics
   PUBLIC
   entity
   collision
-  glm
+  glm::glm
 )

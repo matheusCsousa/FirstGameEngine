@@ -197,50 +197,69 @@ float deltaTime = Input::getDeltaTime();
 - GLEW
 - GLM
 - stb_image
-- CMake (3.x or newer)
+- CMake 3.24 or newer
+- A C++23 compiler (MSVC, GCC, or Clang)
 
-GLFW and GLEW are included as static libraries under:
+CMake fetches versioned GLFW 3.4, GLEW 2.2.0, and GLM 1.0.1 sources by default and builds them with the selected compiler. The pre-existing archives in `core/Graphics/lib/` are not used. The first configure requires network access.
 
-```text
-core/Graphics/lib/
-```
-
----
+To use installed packages instead, configure with `-DFERSA_FETCH_DEPENDENCIES=OFF`; packages must provide `glfw`, `GLEW::GLEW`, and `glm::glm` targets.
 
 ## Building
 
-Clone the repository:
-
-```bash
-git clone https://github.com/matheusCsousa/FirstGameEngine.git
-cd FirstGameEngine
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build --config Debug --parallel 2
 ```
 
-Generate build files:
+On Linux, install OpenGL/X11 development packages first. For Ubuntu:
 
-```bash
-mkdir build
-cd build
-
-cmake ..
-make
+```sh
+sudo apt-get install cmake ninja-build libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 ```
 
-The executable will be generated at:
-
-```text
-build/gameApp/fersa
-```
-
----
+On Windows, use a developer terminal with Visual Studio C++ build tools, or configure a suitable CMake toolchain. Dependencies are compiled from source; no manually copied `.a` files are required.
 
 ## Running
 
-From the project root:
+Single-configuration builds (Linux, Ninja):
 
-```bash
+```sh
 ./build/gameApp/fersa
 ```
+
+Visual Studio builds:
+
+```powershell
+.\build\gameApp\Debug\fersa.exe
+```
+
+Assets are copied into `assets/` beside the executable after the sample is linked. Launching via the executable path above also works from another working directory. A launcher that only supplies a bare executable name via PATH can explicitly set the asset location:
+
+```sh
+fersa --assets /path/to/assets
+```
+
+`--smoke-test` creates a hidden OpenGL window, renders three frames, and exits. Startup errors are printed to stderr and return a nonzero exit status.
+
+## Runtime checks
+
+```sh
+ctest --test-dir build -C Debug --output-on-failure
+```
+
+Graphics tests require a working OpenGL 3.3 context. Linux CI runs them under Xvfb/Mesa:
+
+```sh
+xvfb-run -a ctest --test-dir build --output-on-failure
+```
+
+Checks cover initialization validation, multiple-window GLFW lifetime, running without application logic, bounded updates/rendering, releasing application logic with its context still current, idempotent GPU deletion, mesh index-buffer ownership, sample asset resolution from another directory, missing assets, and Linux startup without a display. Windows CI builds the engine and runs the display-independent missing-assets check; run the graphics checks locally with an OpenGL-capable driver.
+
+## Editor direction
+
+The next milestones are a separate editor application, scene hierarchy, transform inspector, viewport, and scene save/load. See [EDITOR-MVP.md](EDITOR-MVP.md) and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md).
+
+The current executable remains a runtime sample. It does not yet include editor panels, scene documents, gizmos, or Play/Stop state management.
 
 ---
 

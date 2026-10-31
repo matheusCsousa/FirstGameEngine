@@ -12,4 +12,5 @@ target_link_libraries(scene
   entity
   physics
   input
+  asset_manager
 )

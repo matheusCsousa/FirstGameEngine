@@ -20,7 +20,7 @@ public:
     Shader& operator=(Shader&& other) noexcept;
 
     void activate() const;
-    void del() const;
+    void del();
 
     void setBol(const std::string& name, bool value) const;
     void setInt(const std::string& name, int value) const;

@@ -2,6 +2,8 @@
 
 #include <string>
 #include <memory>
+#include <utility>
+#include <cstddef>
 
 #include "../Window/Window.hpp"
 #include "../Logic/Logic.hpp"
@@ -25,11 +27,12 @@ private:
 public:
     Game(GameSpecs& specs);
     ~Game();
-    void run();
+    void run(std::size_t maxFrames = 0);
 
-    template<typename TLogic>
-    void pushLogic() {
-        m_logic = std::make_unique<TLogic>(m_window);
+    template<typename TLogic, typename... Args>
+    void pushLogic(Args&&... args) {
+        m_window->makeCurrent();
+        m_logic = std::make_unique<TLogic>(m_window, std::forward<Args>(args)...);
     };
 };
 }
