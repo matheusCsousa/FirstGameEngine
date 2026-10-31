@@ -54,8 +54,14 @@ Play/Stop state isolation, transform gizmos, undo/redo, and physics/material ins
 - Smoke tests for startup, frame rendering, clean shutdown, and missing/invalid assets.
 - Editor checks for selection after deletion, invalid scene-file recovery, viewport resizing/minimization, camera input while typing, and Edit/Play/Stop state isolation.
 
-The runtime foundation is implemented. The editor-shell changes add named entities with stable scene-local IDs, safe removal/duplication, a separate docking editor, a live framebuffer viewport, and a transform inspector. Physics remains paused while authoring. Scene persistence is now implemented with versioned, validated files and dirty-state prompts; see SCENE-FORMAT.md. The remaining authoring workflow includes Play/Stop isolation, materials/assets, gizmos, undo/redo, and per-object scripting.
+The runtime foundation is implemented. The editor-shell changes add named entities with stable scene-local IDs, safe removal/duplication, a separate docking editor, a live framebuffer viewport, and a transform inspector. Physics remains paused while authoring. Play/Pause/Step/Stop now uses a disposable scene copy and a bounded fixed-step physics preview, with read-only runtime inspection. Scene persistence is now implemented with versioned, validated files and dirty-state prompts; see SCENE-FORMAT.md. The remaining authoring workflow includes materials/assets, gizmos, undo/redo, and per-object scripting.
 
 ## Per-object scripting (later milestone)
 
 Users should be able to attach scripts to scene objects and program their behavior. Plan a script component containing a portable script asset reference and editable properties, a runtime lifecycle (start/update/stop), access to the owning entity's transform, and useful error reporting. Scripts must run in the Play-mode scene copy so stopping restores authored state. Choose the scripting language and reload behavior in that milestone; no script execution or attachment UI is implemented yet. Extend the versioned scene format when script components are introduced.
+
+## Implemented Play workflow
+
+Play clones mutable scene/entity data and the editor camera while sharing GPU assets. The authored document, its selection IDs, save path, and dirty state remain intact. Pause and single-step operate on the runtime copy; Stop destroys it. Editing and file operations are disabled until Stop, and native close stops preview before checking the authored dirty state. Physics inspection exposes mass, gravity, and initial velocity in Edit mode; mass zero is static. The preview currently simulates physics only and does not execute scripts.
+
+Fixed stepping uses 1/120 second, a maximum of eight ticks per frame, and no catch-up for paused time. Regression tests cover state isolation, restored transforms, replay, pause/resume/step, bounded/invalid frame times, equal-depth collision axes, and falling-body landing.
