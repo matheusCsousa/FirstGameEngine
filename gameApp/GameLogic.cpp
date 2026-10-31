@@ -19,7 +19,7 @@
 #include "Camera/freeCam.hpp"
 #include <AABB.hpp>
 
-GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
+GameLogic::GameLogic(std::shared_ptr<Core::Window> window, const std::filesystem::path& assets)
     : m_window(window) {
     std::cout << "GameLogic started!" << std::endl;
     Core::Input::setMouseMode(false);
@@ -29,9 +29,9 @@ GameLogic::GameLogic(std::shared_ptr<Core::Window> window)
     auto am = scene->getAssetManager();
 
     Core::Collision::AABB localAABB;
-    auto mesh = am->loadMeshFromOBJ("cube_mesh", "gameApp/models/cube.obj", localAABB);
-    m_shader = am->loadShader("basic_shader", "gameApp/shader/shader.vert", "gameApp/shader/shader.frag");
-    auto texture = am->loadTexture("brick_tex", "gameApp/textures/brick.jpg", "diffuse", 0);
+    auto mesh = am->loadMeshFromOBJ("cube_mesh", (assets / "models/cube.obj").string(), localAABB);
+    m_shader = am->loadShader("basic_shader", (assets / "shader/shader.vert").string().c_str(), (assets / "shader/shader.frag").string().c_str());
+    auto texture = am->loadTexture("brick_tex", (assets / "textures/brick.jpg").string().c_str(), "diffuse", 0);
 
     texture->texUnit(*m_shader, "tex0", 0);
 

@@ -4,6 +4,9 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <stdexcept>
+
+namespace { unsigned int glfwOwners = 0; }
 
 namespace Core {
 
@@ -15,21 +18,28 @@ Window::~Window() {
 }
 
 void Window::create() {
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW\n";
-        return;
+    if (m_window || m_ownsGlfw) throw std::logic_error("Window is already created");
+    if (m_specs.width <= 0 || m_specs.height <= 0)
+        throw std::invalid_argument("Window dimensions must be positive");
+    if (glfwOwners == 0) {
+        glfwSetErrorCallback([](int code, const char* description) {
+            std::cerr << "GLFW error " << code << ": " << description << '\n';
+        });
+        if (!glfwInit()) throw std::runtime_error("Failed to initialize GLFW");
     }
-
+    ++glfwOwners;
+    m_ownsGlfw = true;
+    glfwDefaultWindowHints();
+    glfwWindowHint(GLFW_VISIBLE, m_specs.visible ? GLFW_TRUE : GLFW_FALSE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    m_window = glfwCreateWindow(m_specs.width, m_specs.height, "OpenGL Window", nullptr, nullptr);
+    m_window = glfwCreateWindow(m_specs.width, m_specs.height, m_specs.title.c_str(), nullptr, nullptr);
     if (!m_window) {
-        std::cerr << "Failed to create GLFW window\n";
-        glfwTerminate();
-        return;
+        destroy();
+        throw std::runtime_error("Failed to create GLFW window with OpenGL 3.3");
     }
 
     glfwMakeContextCurrent(m_window);
@@ -96,27 +106,42 @@ void Window::create() {
 
     glewExperimental = GL_TRUE;
 
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW\n";
-        glfwDestroyWindow(m_window);
-        glfwTerminate();
-        return;
+    const auto glewStatus = glewInit();
+    if (glewStatus != GLEW_OK) {
+        const std::string message = reinterpret_cast<const char*>(glewGetErrorString(glewStatus));
+        destroy();
+        throw std::runtime_error("Failed to initialize GLEW: " + message);
     }
+    // GLEW probes extensions on core contexts; discard its startup error state.
+    while (glGetError() != GL_NO_ERROR) {}
+    glfwGetFramebufferSize(m_window, &m_specs.bufferWidth, &m_specs.bufferHeight);
+    glfwSwapInterval(1);
 
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << "\n";
     std::cout << "Renderer: "       << glGetString(GL_RENDERER) << std::endl;
 
     glEnable(GL_DEPTH_TEST);
 
-    glViewport(0, 0, m_specs.width, m_specs.height);
+    glViewport(0, 0, m_specs.bufferWidth, m_specs.bufferHeight);
 }
 
-void Window::destroy() {
+void Window::destroy() noexcept {
     if (m_window) {
         glfwDestroyWindow(m_window);
         m_window = nullptr;
     }
-    glfwTerminate();
+    if (m_ownsGlfw) {
+        m_ownsGlfw = false;
+        if (--glfwOwners == 0) glfwTerminate();
+    }
+}
+
+void Window::makeCurrent() noexcept {
+    if (m_window) glfwMakeContextCurrent(m_window);
+}
+
+bool Window::hasFramebuffer() const {
+    return m_specs.bufferWidth > 0 && m_specs.bufferHeight > 0;
 }
 
 void Window::update() {
@@ -138,13 +163,13 @@ void Window::framebuffer_size_callback(
     win->m_specs.bufferHeight = height;
 }
 
-float Window::aspectRatio() {
-    return (float)m_specs.bufferWidth / (float)m_specs.bufferHeight;
+float Window::aspectRatio() const {
+    return hasFramebuffer() ? static_cast<float>(m_specs.bufferWidth) / m_specs.bufferHeight : 1.0f;
 }
 
 void Window::swapBuffers() { glfwSwapBuffers(m_window); }
 
-bool Window::shouldClose() { return glfwWindowShouldClose(m_window); }
+bool Window::shouldClose() { return !m_window || glfwWindowShouldClose(m_window); }
 
 void Window::setShouldClose(bool value) { glfwSetWindowShouldClose(m_window, value); }
 

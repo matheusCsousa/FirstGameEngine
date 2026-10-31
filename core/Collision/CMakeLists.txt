@@ -5,5 +5,5 @@ target_include_directories(collision INTERFACE
 )
 
 target_link_libraries(collision INTERFACE
-  glm
+  glm::glm
 )
