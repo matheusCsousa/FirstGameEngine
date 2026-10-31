@@ -257,9 +257,22 @@ Checks cover initialization validation, multiple-window GLFW lifetime, running w
 
 ## Editor direction
 
-The next milestones are a separate editor application, scene hierarchy, transform inspector, viewport, and scene save/load. See [EDITOR-MVP.md](EDITOR-MVP.md) and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md).
+Builds now include **fersa_editor**, a separate Dear ImGui docking application:
 
-The current executable remains a runtime sample. It does not yet include editor panels, scene documents, gizmos, or Play/Stop state management.
+```sh
+# Windows multi-configuration build
+./build/editor/Debug/fersa_editor.exe
+# Linux / Ninja single-configuration build
+./build/editor/fersa_editor
+```
+
+The editor opens a cube and ground scene. Select objects in Hierarchy; edit names, positions, rotations (degrees), and positive scales in Inspector. Create cubes, duplicate, reset transforms, and delete objects. The Scene panel renders to a resizing framebuffer. Hold the right mouse button over it to fly with WASD, Q/E for vertical movement, and Shift for speed. Release RMB or press Escape to release the camera.
+
+**Edits are session-only. Closing discards them.** Physics remains paused. Scene save/load, materials/assets UI, gizmos, undo/redo, and Play/Stop are future milestones. Selection currently happens through the hierarchy, not by clicking a mesh. Dock layouts reset on launch.
+
+Dear ImGui is pinned to `v1.92.0-docking`. An offline checkout can be supplied with `-DFERSA_IMGUI_SOURCE_DIR=/path/to/imgui`; use `-DFERSA_BUILD_EDITOR=OFF` to build only the runtime/sample. `FERSA_FETCH_DEPENDENCIES=OFF` controls the graphics libraries; the editor still needs ImGui source. The editor also accepts `--assets DIRECTORY` and `--smoke-test`, and receives its own copied assets next to the executable.
+
+Tests include stable IDs, duplicate independence, deletion lookup, and a hidden editor startup/render/shutdown check. See [EDITOR-MVP.md](EDITOR-MVP.md) for the remaining authoring workflow and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md) for the original engine audit.
 
 ---
 

@@ -38,15 +38,15 @@ Build configuration, corrected includes, initialization/cleanup lifecycle, virtu
 
 ### PR 2: editor shell and selection
 
-Separate editor target, docking layout, scene hierarchy, stable entity selection, and transform inspector. Scene simulation stays paused in Edit mode.
+Separate editor target, docking layout, scene hierarchy, stable entity selection, and transform inspector. Includes the framebuffer viewport and create/duplicate/delete actions to make transform editing immediately useful. Scene simulation stays paused in Edit mode.
 
-### PR 3: viewport and scene persistence
+### PR 3: scene persistence
 
-Framebuffer-backed viewport, correct viewport resize/input ownership, versioned scene documents, asset references, and validated save/load.
+Versioned scene documents, asset references, validated save/load, and dirty-state handling. The framebuffer viewport and camera input ownership are implemented with the editor shell.
 
 ### PR 4: authoring workflow
 
-Create/duplicate/delete, Play/Stop state isolation, dirty-state handling, transform gizmos, and undo/redo.
+Play/Stop state isolation, transform gizmos, undo/redo, and physics/material inspection. Create/duplicate/delete are implemented with the editor shell.
 
 ## Verification
 
@@ -54,4 +54,4 @@ Create/duplicate/delete, Play/Stop state isolation, dirty-state handling, transf
 - Smoke tests for startup, frame rendering, clean shutdown, and missing/invalid assets.
 - Editor checks for selection after deletion, invalid scene-file recovery, viewport resizing/minimization, camera input while typing, and Edit/Play/Stop state isolation.
 
-The runtime-foundation changes implement the first milestone: dependency setup, lifecycle/failure handling, camera ownership, asset paths, and runtime checks. The local Windows build and all three local tests passed. The editor executable and its panels remain the next milestone.
+The runtime foundation is implemented. The editor-shell changes add named entities with stable scene-local IDs, safe removal/duplication, a separate docking editor, a live framebuffer viewport, and a transform inspector. Edits remain in memory, physics is paused, and the editor explicitly labels the session-only behavior. Scene persistence and the rest of the authoring workflow remain unimplemented.

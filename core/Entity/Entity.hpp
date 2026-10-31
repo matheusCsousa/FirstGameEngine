@@ -8,6 +8,8 @@
 #include <AABB.hpp>
 
 #include <vector>
+#include <cstdint>
+#include <string>
 
 namespace Core {
 namespace Render {
@@ -18,7 +20,11 @@ namespace Graphics {
     class Mesh;
 }
 
+using EntityId = std::uint64_t;
+
 class Entity {
+    friend class Scene;
+    EntityId m_id = 0;
 private:
     std::shared_ptr<Core::Graphics::Mesh> m_mesh;
     std::shared_ptr<Core::Render::Shader> m_shader;
@@ -29,6 +35,10 @@ private:
 public:
     Entity(std::shared_ptr<Core::Graphics::Mesh> mesh, std::shared_ptr<Core::Render::Shader> shader);
     ~Entity() = default;
+    Entity(const Entity&) = delete;
+    Entity& operator=(const Entity&) = delete;
+    EntityId id() const { return m_id; }
+    std::string name = "Entity";
 
     glm::vec3 position{};
     glm::vec3 rotation{};

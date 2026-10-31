@@ -5,6 +5,7 @@
 #include "../Window/Window.hpp"
 #include <Input.hpp>
 #include <Physics.hpp>
+#include <algorithm>
 
 namespace Core {
 
@@ -21,6 +22,7 @@ Core::Entity* Scene::createEntity(
         std::make_unique<Core::Entity>(mesh, shader)
     );
 
+    m_entities.back()->m_id = m_nextId++;
     return m_entities.back().get();
 }
 
@@ -32,11 +34,37 @@ Core::Graphics::Camera* Scene::getCamera() {
     return m_camera.get();
 }
 
-void Scene::render(Window* window) {
+Entity* Scene::findEntity(EntityId id) {
+    for (auto& entity : m_entities) if (entity->id() == id) return entity.get();
+    return nullptr;
+}
+
+bool Scene::removeEntity(EntityId id) {
+    return std::erase_if(m_entities, [id](const auto& entity) { return entity->id() == id; }) != 0;
+}
+
+Entity* Scene::duplicateEntity(EntityId id) {
+    auto* source = findEntity(id);
+    if (!source) return nullptr;
+    auto* copy = createEntity(source->getMesh(), source->getShader());
+    copy->name = source->name + " Copy";
+    copy->position = source->position; copy->rotation = source->rotation; copy->scale = source->scale;
+    copy->velocity = source->velocity; copy->acceleration = source->acceleration;
+    copy->mass = source->mass; copy->useGravity = source->useGravity;
+    copy->setLocalAABB(source->getLocalAABB());
+    for (auto& texture : source->getTextures()) copy->addTexture(texture);
+    return copy;
+}
+
+void Scene::render(Window* window) { render(window->aspectRatio()); }
+
+void Scene::render(float aspectRatio) {
+    const auto view = m_camera->calcViewMatrix();
+    const auto projection = m_camera->calcProjectionMatrix(aspectRatio);
     for (auto &enty : m_entities) {
         enty->getShader()->activate();
-        enty->getShader()->setMat4("view", m_camera->calcViewMatrix());
-        enty->getShader()->setMat4("projection", m_camera->calcProjectionMatrix(window->aspectRatio()));
+        enty->getShader()->setMat4("view", view);
+        enty->getShader()->setMat4("projection", projection);
         
         enty->getShader()->setVec3("viewPos", m_camera->getPosition());
         enty->getShader()->setVec3("lightPos", glm::vec3(3.0f, 3.0f, 5.0f));
