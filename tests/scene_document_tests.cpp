@@ -39,7 +39,7 @@ int main() {
         rejected([&]{encode(invalid);});
         directory=std::filesystem::temp_directory_path()/("fersa-scene-test-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
         std::filesystem::create_directory(directory);
-        const auto path=directory/"scene.fersa.json";
+        const auto path=directory/std::filesystem::path(u8"cena-\u00e1.fersa.json");
         write(path,source); require(encode(read(path))==text,"Saved file did not reopen correctly");
         rejected([&]{write(path,invalid);});
         require(encode(read(path))==text,"Failed save damaged the previous file");

@@ -256,10 +256,10 @@ void Editor::fileControls() {
         ImGui::EndMainMenuBar();
     }
     auto& io=ImGui::GetIO();
-    if (!busy && !navigating && io.KeyCtrl && !io.WantTextInput) {
+    if (!busy && !navigating && io.KeyCtrl) {
         if (ImGui::IsKeyPressed(ImGuiKey_S,false)) { if (io.KeyShift) openFileDialog(FileMode::Save); else save(); }
-        else if (ImGui::IsKeyPressed(ImGuiKey_O,false)) request(Action::Open);
-        else if (ImGui::IsKeyPressed(ImGuiKey_N,false)) request(Action::New);
+        else if (!io.WantTextInput && ImGui::IsKeyPressed(ImGuiKey_O,false)) request(Action::Open);
+        else if (!io.WantTextInput && ImGui::IsKeyPressed(ImGuiKey_N,false)) request(Action::New);
     }
     if (showUnsaved) { ImGui::OpenPopup("Unsaved changes"); showUnsaved=false; fileError.clear(); }
     ImGui::SetNextWindowSize({460,0},ImGuiCond_Appearing);
