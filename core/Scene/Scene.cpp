@@ -62,6 +62,22 @@ Entity* Scene::duplicateEntity(EntityId id) {
     return copy;
 }
 
+std::unique_ptr<Scene> Scene::clone(std::unique_ptr<Core::Graphics::Camera> camera) const {
+    auto result = std::make_unique<Scene>(std::move(camera));
+    result->m_assetManager = m_assetManager; // GPU assets are shared; mutable entity state is independent.
+    for (const auto& source : m_entities) {
+        auto* copy = result->createEntity(source->getMesh(), source->getShader(), source->id());
+        copy->name = source->name;
+        copy->position = source->position; copy->rotation = source->rotation; copy->scale = source->scale;
+        copy->velocity = source->velocity; copy->acceleration = source->acceleration;
+        copy->mass = source->mass; copy->useGravity = source->useGravity;
+        copy->setLocalAABB(source->getLocalAABB());
+        for (auto& texture : source->getTextures()) copy->addTexture(texture);
+    }
+    result->m_nextId = m_nextId;
+    return result;
+}
+
 void Scene::render(Window* window) { render(window->aspectRatio()); }
 
 void Scene::render(float aspectRatio) {

@@ -20,10 +20,10 @@ CollisionInfo checkCollision(const Core::Collision::AABB& a, const Core::Collisi
     if (overlapX > 0 && overlapY > 0 && overlapZ > 0) {
         info.collided = true;
         
-        if (overlapX < overlapY && overlapX < overlapZ) {
+        if (overlapX <= overlapY && overlapX <= overlapZ) {
             info.penetration = overlapX;
             info.normal = (a.min.x + a.max.x < b.min.x + b.max.x) ? glm::vec3(-1.0f, 0.0f, 0.0f) : glm::vec3(1.0f, 0.0f, 0.0f);
-        } else if (overlapY < overlapX && overlapY < overlapZ) {
+        } else if (overlapY <= overlapZ) {
             info.penetration = overlapY;
             info.normal = (a.min.y + a.max.y < b.min.y + b.max.y) ? glm::vec3(0.0f, -1.0f, 0.0f) : glm::vec3(0.0f, 1.0f, 0.0f);
         } else {
