@@ -15,3 +15,7 @@ The whole document and all referenced resources are loaded into a replacement sc
 Transforms and physics numbers are finite, scale is 0.01–1000, mass is nonnegative, names are limited to 1024 UTF-8 bytes, references to 512 bytes, and files to 4 MiB / 10000 objects / 32 nesting levels. OBJ files are limited to 64 MiB, one million emitted vertices, and supported finite coordinates. Images are limited to 64 MiB input, 8192 per axis, 16 megapixels, and the current GPU texture limit. Lua source is limited to 256 KiB.
 
 Scene saving validates and writes a sibling temporary file, checks stream errors, and replaces the destination (MoveFileExW on Windows, rename on POSIX). Failed saves keep the document dirty. New/Open/native close use Save/Discard/Cancel for unsaved authored data. Script source has its own save prompt. New keeps the current project asset library; Open changes project root to the chosen scene directory. Files are local; no cloud synchronization is implemented.
+
+Built-in mesh references also include `models/square.obj`, `models/plane.obj`,
+`models/sphere.obj`, `models/cylinder.obj`, `models/cone.obj`, and
+`models/capsule.obj`. These ship with the editor and need no project import.

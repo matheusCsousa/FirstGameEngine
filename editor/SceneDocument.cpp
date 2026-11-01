@@ -1,3 +1,4 @@
+#include "BuiltinMeshes.hpp"
 #include "SceneDocument.hpp"
 #include "AssetPaths.hpp"
 #include <nlohmann/json.hpp>
@@ -26,7 +27,7 @@ void validate(const Document& document) {
         if (!object.id || object.id == std::numeric_limits<Core::EntityId>::max() || !ids.insert(object.id).second)
             throw std::runtime_error("Scene contains a reserved or duplicate object ID");
         if (object.name.size() > 1024) throw std::runtime_error("Object name exceeds 1024 bytes");
-        if(object.mesh!="models/cube.obj" && (!AssetPaths::reference(object.mesh)||AssetPaths::extension(object.mesh)!=".obj"))throw std::runtime_error("Invalid mesh reference");
+        if(!BuiltinMeshes::contains(object.mesh) && (!AssetPaths::reference(object.mesh)||AssetPaths::extension(object.mesh)!=".obj"))throw std::runtime_error("Invalid mesh reference");
         const auto extension=AssetPaths::extension(object.material);
         if(object.material!="builtin/brick"&&object.material!="builtin/white"&&(!AssetPaths::reference(object.material)||(extension!=".png"&&extension!=".jpg"&&extension!=".jpeg")))throw std::runtime_error("Invalid texture reference");
         if(!object.script.empty()&&(!AssetPaths::reference(object.script)||AssetPaths::extension(object.script)!=".lua"))throw std::runtime_error("Invalid script reference");
