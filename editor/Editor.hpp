@@ -6,6 +6,7 @@
 #include "SceneDocument.hpp"
 #include "PlaySession.hpp"
 #include "EditHistory.hpp"
+#include "AssetLibrary.hpp"
 
 class Editor final : public Core::Logic {
     std::shared_ptr<Core::Window> window;
@@ -14,6 +15,21 @@ class Editor final : public Core::Logic {
     std::shared_ptr<Core::Render::Shader> cubeShader;
     std::shared_ptr<Core::Render::Texture> cubeTexture;
     Core::Collision::AABB cubeBounds;
+    std::unique_ptr<AssetLibrary> assets;
+    std::vector<AssetEntry> assetEntries;
+    std::vector<std::filesystem::path> pendingImports;
+    void (*previousDrop)(GLFWwindow*,int,const char**)=nullptr;
+    std::string assetSelected,assetFilter,assetMessage,importPath;
+    bool showImport=false,showScript=false;
+    std::string editingScript,scriptText,savedScriptText,scriptError;
+    void refreshAssets();
+    void importAssets(const std::vector<std::filesystem::path>& files);
+    void drawAssets();
+    void drawMaterialAndScript(Core::Entity& entity);
+    void assignAsset(const std::string& reference,Core::EntityId target);
+    void createModel(const std::string& reference);
+    void editScript(const std::string& reference);
+    void frameSelected();
     EditHistory history;
     bool gizmoUsing=false, editFinished=false;
     enum class TransformTool { Move, Rotate, Scale };
@@ -22,7 +38,7 @@ class Editor final : public Core::Logic {
     void flushHistory();
     void restoreHistory(bool redo);
     void viewportTools(glm::vec2 origin,glm::vec2 size,bool hovered);
-    std::unique_ptr<Core::Scene> makeScene(const EditorFiles::Document& document,std::unique_ptr<Core::Graphics::Camera> camera);
+    std::unique_ptr<Core::Scene> makeScene(const EditorFiles::Document& document,std::unique_ptr<Core::Graphics::Camera> camera,AssetLibrary* library=nullptr);
     PlaySession play;
     void startPlay();
     void stopPlay();
@@ -49,7 +65,7 @@ class Editor final : public Core::Logic {
     void releaseNavigation();
     void createCube();
 public:
-    Editor(std::shared_ptr<Core::Window> window, const std::filesystem::path& assets);
+    Editor(std::shared_ptr<Core::Window> window, const std::filesystem::path& assets,const std::filesystem::path& project={});
     ~Editor() override;
     bool onCloseRequested() override;
     void onUpdate() override;

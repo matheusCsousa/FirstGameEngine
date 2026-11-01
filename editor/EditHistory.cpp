@@ -2,7 +2,7 @@
 namespace {
 std::size_t bytes(const EditSnapshot& state) {
     std::size_t result=sizeof(state)+state.document.objects.size()*sizeof(EditorFiles::Object);
-    for(const auto& object:state.document.objects) result+=object.name.size()+object.mesh.size()+object.material.size();
+    for(const auto& object:state.document.objects) result+=object.name.size()+object.mesh.size()+object.material.size()+object.script.size();
     return result;
 }
 }
