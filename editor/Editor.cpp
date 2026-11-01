@@ -1,9 +1,13 @@
 #include "Editor.hpp"
 #include "TransformControls.hpp"
+#include "EditorMath.hpp"
+
+#include <glm/gtc/type_ptr.hpp>
 #include "../core/Input/Input.hpp"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 #include <imgui_impl_glfw.h>
@@ -65,8 +69,10 @@ Editor::Editor(std::shared_ptr<Core::Window> target, const std::filesystem::path
     auto ground = scene->duplicateEntity(selected);
     ground->name = "Ground"; ground->position = {0,-1,0}; ground->scale = {5,0.2f,5};
     ground->mass=0; ground->useGravity=false;
+    history.reset(EditorFiles::capture(*scene),selected);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
     auto& io = ImGui::GetIO();
     io.IniFilename = nullptr; // Reproducible layout; layout persistence follows scene persistence.
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard;
@@ -115,6 +121,7 @@ void Editor::resizeViewport(int w, int h) {
     width = w; height = h;
 }
 void Editor::createCube() {
+    flushHistory();
     auto* cube = scene->createEntity(cubeMesh, cubeShader);
     cube->name = "Cube"; cube->position = {0,1,0};
     cube->setLocalAABB(cubeBounds); cube->addTexture(cubeTexture);
@@ -123,6 +130,7 @@ void Editor::createCube() {
 }
 void Editor::startPlay() {
     if (play.isPlaying()) return;
+    flushHistory();
     releaseNavigation();
     try {
         play.start(*scene,std::make_unique<EditorCamera>(*static_cast<EditorCamera*>(scene->getCamera())));
@@ -139,6 +147,8 @@ void Editor::onUpdate() {
 }
 void Editor::onRender() {
     ImGui_ImplOpenGL3_NewFrame(); ImGui_ImplGlfw_NewFrame(); ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
+    editFinished=false;
     if (navigating && (!ImGui::IsMouseDown(ImGuiMouseButton_Right) ||
         !glfwGetWindowAttrib(window->getWindow(), GLFW_FOCUSED) || ImGui::IsKeyPressed(ImGuiKey_Escape))) releaseNavigation();
     fileControls();
@@ -169,48 +179,73 @@ void Editor::onRender() {
         ImGui::TextDisabled("OBJECT");
         ImGui::PushID(std::to_string(selected).c_str());
         dirty |= ImGui::InputText("Name", &entity->name);
+        editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         ImGui::SeparatorText("Transform");
         dirty |= EditorWidgets::editVector("Position", entity->position, 0.05f);
+        editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         dirty |= EditorWidgets::editVector("Rotation", entity->rotation, 0.5f);
+        editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         ImGui::TextDisabled("Rotation in degrees");
         dirty |= EditorWidgets::editVector("Scale", entity->scale, 0.01f, true);
+        editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         ImGui::TextWrapped("Drag values horizontally, or Ctrl+click to type. Axes: X / Y / Z.");
-        if (ImGui::Button("Reset transform")) { entity->position={}; entity->rotation={}; entity->scale={1,1,1}; dirty=true; }
+        if (ImGui::Button("Reset transform")) { flushHistory(); entity->position={}; entity->rotation={}; entity->scale={1,1,1}; dirty=true; }
         ImGui::SeparatorText("Physics");
         const float previousMass=entity->mass;
         if (ImGui::DragFloat("Mass (kg)",&entity->mass,0.1f,0,1000000,"%.2f",ImGuiSliderFlags_AlwaysClamp)) {
             if (!std::isfinite(entity->mass)) entity->mass=previousMass;
             dirty |= entity->mass!=previousMass;
         }
+        editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         dirty |= ImGui::Checkbox("Use gravity",&entity->useGravity);
+        editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         ImGui::TextWrapped("Mass 0 is static. Set mass above 0 for movement.");
         ImGui::TextUnformatted(play.isPlaying() ? "Velocity (X / Y / Z)" : "Initial velocity (X / Y / Z)");
         ImGui::SetNextItemWidth(-1);
         dirty |= EditorWidgets::editVector("##Velocity",entity->velocity,0.1f);
+        editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         ImGui::Separator();
-        if (ImGui::Button("Duplicate")) { selected = scene->duplicateEntity(selected)->id(); dirty=true; }
+        if (ImGui::Button("Duplicate")) { flushHistory(); selected = scene->duplicateEntity(selected)->id(); dirty=true; }
         // Read selection again next frame: no raw pointer survives deletion.
-        if (ImGui::Button("Delete")) { scene->removeEntity(selected); selected = 0; dirty=true; }
+        if (ImGui::Button("Delete")) { flushHistory(); scene->removeEntity(selected); selected = 0; dirty=true; }
         ImGui::PopID();
         ImGui::EndDisabled();
     } else { selected = 0; ImGui::TextWrapped("Select an object in the hierarchy to edit its transform."); }
     ImGui::End();
     bool sceneVisible = ImGui::Begin("Scene");
-    ImGui::TextDisabled("RMB + WASD: fly   Q/E: down/up   Shift: faster");
+    ImGui::BeginDisabled(play.isPlaying());
+    if(ImGui::RadioButton("Move",transformTool==TransformTool::Move)) transformTool=TransformTool::Move;
+    ImGui::SameLine(); if(ImGui::RadioButton("Rotate",transformTool==TransformTool::Rotate)) transformTool=TransformTool::Rotate;
+    ImGui::SameLine(); if(ImGui::RadioButton("Scale",transformTool==TransformTool::Scale)) transformTool=TransformTool::Scale;
+    ImGui::SameLine();
+    bool shownLocal=transformTool==TransformTool::Scale || localSpace;
+    ImGui::BeginDisabled(transformTool==TransformTool::Scale);
+    if(ImGui::Checkbox("Local axes",&shownLocal))localSpace=shownLocal;
+    ImGui::EndDisabled();
+    ImGui::EndDisabled();
+    ImGui::TextDisabled("W/E/R: tools | RMB + WASD: fly | Click object to select");
     auto available = ImGui::GetContentRegionAvail();
     if (sceneVisible && available.x >= 1 && available.y >= 1) {
         auto& io = ImGui::GetIO();
         resizeViewport(static_cast<int>(available.x * io.DisplayFramebufferScale.x), static_cast<int>(available.y * io.DisplayFramebufferScale.y));
+        auto imageOrigin=ImGui::GetCursorScreenPos();
         ImGui::Image(static_cast<ImTextureID>(color), available, {0,1}, {1,0});
-        bool started = !navigating && ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !io.WantTextInput;
+        const bool imageHovered=ImGui::IsItemHovered();
+        bool started = !navigating && imageHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !io.WantTextInput;
         if (started) { navigating = true; glfwSetInputMode(window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED); }
         if (navigating) static_cast<EditorCamera*>(displayedScene().getCamera())->navigate(io.DeltaTime, started ? ImVec2{} : io.MouseDelta);
+        viewportTools({imageOrigin.x,imageOrigin.y},{available.x,available.y},imageHovered);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); glViewport(0,0,width,height);
         glEnable(GL_DEPTH_TEST); glClearColor(0.10f,0.12f,0.16f,1); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         displayedScene().render(static_cast<float>(width)/height);
         glBindFramebuffer(GL_FRAMEBUFFER,0);
-    } else releaseNavigation();
+    } else { releaseNavigation(); ImGuizmo::Enable(false); gizmoUsing=false; }
     ImGui::End();
+    if(!play.isPlaying()) {
+        auto document=EditorFiles::capture(*scene);
+        dirty=history.isDirty(document);
+        if(!gizmoUsing && (editFinished || !ImGui::IsAnyItemActive())) history.commit(std::move(document),selected);
+    }
     ImGui::Render();
     int w,h; glfwGetFramebufferSize(window->getWindow(), &w,&h); glViewport(0,0,w,h);
     glClearColor(0.08f,0.09f,0.11f,1); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -225,6 +260,7 @@ std::string pathText(const std::filesystem::path& path) {
 void Editor::request(Action action) {
     if (pending != Action::None || fileMode != FileMode::None) return;
     stopPlay();
+    flushHistory();
     releaseNavigation();
     pending=action;
     if (dirty) showUnsaved=true;
@@ -232,6 +268,7 @@ void Editor::request(Action action) {
 }
 bool Editor::onCloseRequested() {
     stopPlay();
+    flushHistory();
     if (!dirty && pending==Action::None && fileMode==FileMode::None) return true;
     request(Action::Close);
     return false;
@@ -241,6 +278,7 @@ void Editor::executePending() {
     if (action==Action::New) {
         scene=std::make_unique<Core::Scene>(std::make_unique<EditorCamera>());
         selected=0; dirty=false; currentPath.clear(); status="New empty scene";
+        history.reset(EditorFiles::capture(*scene),selected);
     } else if (action==Action::Open) openFileDialog(FileMode::Open);
     else if (action==Action::Close) window->requestClose();
 }
@@ -251,9 +289,11 @@ void Editor::openFileDialog(FileMode mode) {
 }
 bool Editor::saveTo(const std::filesystem::path& path) {
     if (play.isPlaying()) { status="Stop the preview before saving."; return false; }
+    flushHistory();
     try {
         const auto resolved=std::filesystem::absolute(path).lexically_normal();
         EditorFiles::write(resolved,EditorFiles::capture(*scene));
+        history.markSaved(EditorFiles::capture(*scene));
         currentPath=resolved; dirty=false; status="Saved "+pathText(resolved); fileError.clear(); return true;
     } catch (const std::exception& error) { fileError=error.what(); status="Save failed: "+fileError; return false; }
 }
@@ -261,16 +301,10 @@ bool Editor::loadFrom(const std::filesystem::path& path) {
     try {
         const auto resolved=std::filesystem::absolute(path).lexically_normal();
         const auto document=EditorFiles::read(resolved);
-        auto replacement=std::make_unique<Core::Scene>(std::make_unique<EditorCamera>());
-        for (const auto& object : document.objects) {
-            auto* entity=replacement->createEntity(cubeMesh,cubeShader,object.id);
-            entity->name=object.name; entity->position=object.position; entity->rotation=object.rotation; entity->scale=object.scale;
-            entity->velocity=object.velocity; entity->acceleration=object.acceleration;
-            entity->mass=object.mass; entity->useGravity=object.gravity;
-            entity->setLocalAABB(cubeBounds); entity->addTexture(cubeTexture);
-        }
+        auto replacement=makeScene(document,std::make_unique<EditorCamera>());
         // Commit only after the entire document has loaded. Invalid files preserve the current scene.
         scene=std::move(replacement); selected=0; currentPath=resolved; dirty=false;
+        history.reset(EditorFiles::capture(*scene),selected);
         status="Opened "+pathText(resolved); fileError.clear(); return true;
     } catch (const std::exception& error) { fileError=error.what(); status="Open failed: "+fileError; return false; }
 }
@@ -292,6 +326,12 @@ void Editor::fileControls() {
             if (ImGui::MenuItem("Exit",nullptr,false,!busy)) request(Action::Close);
             ImGui::EndMenu();
         }
+        if(ImGui::BeginMenu("Edit")) {
+            if(!play.isPlaying()) flushHistory();
+            if(ImGui::MenuItem("Undo","Ctrl+Z",false,!busy && !play.isPlaying() && history.canUndo())) restoreHistory(false);
+            if(ImGui::MenuItem("Redo","Ctrl+Y / Ctrl+Shift+Z",false,!busy && !play.isPlaying() && history.canRedo())) restoreHistory(true);
+            ImGui::EndMenu();
+        }
         ImGui::BeginDisabled(busy);
         if (!play.isPlaying()) {
             if (ImGui::Button("Play")) startPlay();
@@ -310,7 +350,9 @@ void Editor::fileControls() {
     }
     auto& io=ImGui::GetIO();
     if (!busy && !play.isPlaying() && !navigating && io.KeyCtrl) {
-        if (ImGui::IsKeyPressed(ImGuiKey_S,false)) { if (io.KeyShift) openFileDialog(FileMode::Save); else save(); }
+        if(!io.WantTextInput && !ImGui::IsAnyItemActive() && !gizmoUsing && ImGui::IsKeyPressed(ImGuiKey_Z,false)) restoreHistory(io.KeyShift);
+        else if(!io.WantTextInput && !ImGui::IsAnyItemActive() && !gizmoUsing && ImGui::IsKeyPressed(ImGuiKey_Y,false)) restoreHistory(true);
+        else if (ImGui::IsKeyPressed(ImGuiKey_S,false)) { if (io.KeyShift) openFileDialog(FileMode::Save); else save(); }
         else if (!io.WantTextInput && ImGui::IsKeyPressed(ImGuiKey_O,false)) request(Action::Open);
         else if (!io.WantTextInput && ImGui::IsKeyPressed(ImGuiKey_N,false)) request(Action::New);
     }
@@ -357,4 +399,76 @@ void Editor::fileControls() {
     }
     const auto title="Fersa - "+(currentPath.empty() ? std::string("Untitled scene") : pathText(currentPath.filename()))+(dirty ? " *" : "")+(play.isPlaying() ? " [Preview]" : "");
     glfwSetWindowTitle(window->getWindow(),title.c_str());
+}
+
+std::unique_ptr<Core::Scene> Editor::makeScene(const EditorFiles::Document& document,std::unique_ptr<Core::Graphics::Camera> camera) {
+    auto result=std::make_unique<Core::Scene>(std::move(camera));
+    for(const auto& object:document.objects) {
+        auto* entity=result->createEntity(cubeMesh,cubeShader,object.id);
+        entity->name=object.name;entity->position=object.position;entity->rotation=object.rotation;entity->scale=object.scale;
+        entity->velocity=object.velocity;entity->acceleration=object.acceleration;
+        entity->mass=object.mass;entity->useGravity=object.gravity;
+        entity->setLocalAABB(cubeBounds);entity->addTexture(cubeTexture);
+    }
+    return result;
+}
+void Editor::flushHistory() {
+    if(play.isPlaying())return;
+    auto document=EditorFiles::capture(*scene);dirty=history.isDirty(document);
+    history.commit(std::move(document),selected);
+}
+void Editor::restoreHistory(bool redo) {
+    if(play.isPlaying())return;
+    flushHistory();
+    const auto* snapshot=redo ? history.redo() : history.undo();
+    if(!snapshot)return;
+    try {
+        auto replacement=makeScene(snapshot->document,std::make_unique<EditorCamera>(*static_cast<EditorCamera*>(scene->getCamera())));
+        replacement->preserveEntityIdsFrom(*scene);
+        scene=std::move(replacement);selected=scene->findEntity(snapshot->selected) ? snapshot->selected : 0;
+        dirty=history.isDirty(snapshot->document);status=redo ? "Redone scene edit" : "Undone scene edit";
+    } catch(const std::exception& error) {
+        if(redo)history.undo();else history.redo();
+        status="Cannot restore scene edit: "+std::string(error.what());
+    }
+}
+void Editor::viewportTools(glm::vec2 origin,glm::vec2 size,bool hovered) {
+    auto& io=ImGui::GetIO();
+    auto* camera=displayedScene().getCamera();
+    auto view=camera->calcViewMatrix(),projection=camera->calcProjectionMatrix(static_cast<float>(width)/height);
+    const bool allowed=!play.isPlaying()&&!navigating&&pending==Action::None&&fileMode==FileMode::None&&!ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopupId);
+    if(allowed&&hovered&&!io.WantTextInput&&!ImGui::IsAnyItemActive()&&!io.KeyCtrl&&!io.KeyAlt) {
+        if(ImGui::IsKeyPressed(ImGuiKey_W))transformTool=TransformTool::Move;
+        if(ImGui::IsKeyPressed(ImGuiKey_E))transformTool=TransformTool::Rotate;
+        if(ImGui::IsKeyPressed(ImGuiKey_R))transformTool=TransformTool::Scale;
+    }
+    ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());ImGuizmo::SetRect(origin.x,origin.y,size.x,size.y);
+    ImGuizmo::SetOrthographic(false);ImGuizmo::Enable(allowed);
+    auto* entity=displayedScene().findEntity(selected);
+    if(entity && allowed) {
+        auto matrix=entity->getModel();
+        const auto operation=transformTool==TransformTool::Move ? ImGuizmo::TRANSLATE : transformTool==TransformTool::Rotate ? ImGuizmo::ROTATE : ImGuizmo::SCALE;
+        auto mode=(localSpace||transformTool==TransformTool::Scale) ? ImGuizmo::LOCAL : ImGuizmo::WORLD;
+        if(ImGuizmo::Manipulate(glm::value_ptr(view),glm::value_ptr(projection),operation,mode,glm::value_ptr(matrix)))
+            dirty |= EditorMath::applyTransform(*entity,matrix);
+    }
+    gizmoUsing=allowed&&entity&&ImGuizmo::IsUsing();
+    if(allowed&&hovered&&!gizmoUsing&&(!entity||!ImGuizmo::IsOver())&&ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+        auto ray=EditorMath::viewportRay({io.MousePos.x,io.MousePos.y},origin,size,view,projection);
+        flushHistory();selected=ray ? EditorMath::pick(*scene,*ray) : 0;
+        entity=scene->findEntity(selected);
+    }
+    if(entity) {
+        auto* draw=ImGui::GetWindowDrawList();
+        draw->PushClipRect({origin.x,origin.y},{origin.x+size.x,origin.y+size.y},true);
+        const auto bounds=entity->getLocalAABB();const auto matrix=projection*view*entity->getModel();
+        glm::vec4 points[8];
+        for(int i=0;i<8;++i)points[i]=matrix*glm::vec4((i&1)?bounds.max.x:bounds.min.x,(i&2)?bounds.max.y:bounds.min.y,(i&4)?bounds.max.z:bounds.min.z,1);
+        for(int i=0;i<8;++i)for(int bit:{1,2,4})if(!(i&bit)) {
+            const auto a=points[i],b=points[i|bit];if(a.w<=0.001f||b.w<=0.001f)continue;
+            auto screen=[&](glm::vec4 p){return ImVec2(origin.x+(p.x/p.w+1)*size.x*0.5f,origin.y+(1-p.y/p.w)*size.y*0.5f);};
+            draw->AddLine(screen(a),screen(b),IM_COL32(255,198,80,255),1.5f);
+        }
+        draw->PopClipRect();
+    }
 }

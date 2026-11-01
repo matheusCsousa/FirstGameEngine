@@ -25,6 +25,8 @@ public:
 
     std::shared_ptr<Core::AssetManager> getAssetManager() { return m_assetManager; }
 
+    EntityId nextEntityId() const { return m_nextId; }
+    void preserveEntityIdsFrom(const Scene& other);
     Entity* findEntity(EntityId id);
     bool removeEntity(EntityId id);
     Entity* duplicateEntity(EntityId id);
