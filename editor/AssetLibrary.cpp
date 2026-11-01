@@ -1,3 +1,4 @@
+#include "BuiltinMeshes.hpp"
 #include "AssetLibrary.hpp"
 #include "ScriptRuntime.hpp"
 #include "../core/AssetManager/ObjLoader.hpp"
@@ -81,7 +82,7 @@ void AssetLibrary::saveScript(const std::string& reference,const std::string& so
 std::string AssetLibrary::scriptSource(const std::string& reference) const {return AssetPaths::readScript(AssetPaths::resolve(project,reference));}
 LoadedMesh AssetLibrary::mesh(const std::string& reference) {
     auto found=meshes.find(reference);if(found!=meshes.end())return found->second;
-    const auto path=reference=="models/cube.obj"?builtins/"models/cube.obj":AssetPaths::resolve(project,reference);
+    const auto path=BuiltinMeshes::contains(reference)?builtins/AssetPaths::path(reference):AssetPaths::resolve(project,reference);
     if(AssetPaths::extension(reference)!=".obj")throw std::runtime_error("Unsupported mesh");
     LoadedMesh result;result.mesh=manager.loadMeshFromOBJ(reference,AssetPaths::text(path),result.bounds);meshes[reference]=result;return result;
 }
