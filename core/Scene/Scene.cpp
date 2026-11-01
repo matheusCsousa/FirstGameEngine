@@ -55,6 +55,8 @@ Entity* Scene::duplicateEntity(EntityId id) {
     auto* source = findEntity(id);
     if (!source) return nullptr;
     auto* copy = createEntity(source->getMesh(), source->getShader());
+    copy->meshAsset=source->meshAsset; copy->materialAsset=source->materialAsset; copy->scriptAsset=source->scriptAsset;
+    copy->tint=source->tint; copy->tiling=source->tiling;
     copy->name = source->name + " Copy";
     copy->position = source->position; copy->rotation = source->rotation; copy->scale = source->scale;
     copy->velocity = source->velocity; copy->acceleration = source->acceleration;
@@ -69,6 +71,8 @@ std::unique_ptr<Scene> Scene::clone(std::unique_ptr<Core::Graphics::Camera> came
     result->m_assetManager = m_assetManager; // GPU assets are shared; mutable entity state is independent.
     for (const auto& source : m_entities) {
         auto* copy = result->createEntity(source->getMesh(), source->getShader(), source->id());
+        copy->meshAsset=source->meshAsset; copy->materialAsset=source->materialAsset; copy->scriptAsset=source->scriptAsset;
+        copy->tint=source->tint; copy->tiling=source->tiling;
         copy->name = source->name;
         copy->position = source->position; copy->rotation = source->rotation; copy->scale = source->scale;
         copy->velocity = source->velocity; copy->acceleration = source->acceleration;
@@ -94,6 +98,8 @@ void Scene::render(float aspectRatio) {
         enty->getShader()->setVec3("lightPos", glm::vec3(3.0f, 3.0f, 5.0f));
         enty->getShader()->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
+        enty->getShader()->setVec3("materialTint",enty->tint);
+        enty->getShader()->setVec3("textureTiling",glm::vec3(enty->tiling,1));
         for (auto& tex : enty->getTextures()) {
             tex->bind();
         }

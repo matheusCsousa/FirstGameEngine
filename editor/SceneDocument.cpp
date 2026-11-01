@@ -1,4 +1,5 @@
 #include "SceneDocument.hpp"
+#include "AssetPaths.hpp"
 #include <nlohmann/json.hpp>
 #include <chrono>
 #include <cmath>
@@ -25,8 +26,12 @@ void validate(const Document& document) {
         if (!object.id || object.id == std::numeric_limits<Core::EntityId>::max() || !ids.insert(object.id).second)
             throw std::runtime_error("Scene contains a reserved or duplicate object ID");
         if (object.name.size() > 1024) throw std::runtime_error("Object name exceeds 1024 bytes");
-        if (object.mesh != "models/cube.obj" || object.material != "builtin/brick")
-            throw std::runtime_error("Unsupported asset reference: this editor currently supports cube/brick objects");
+        if(object.mesh!="models/cube.obj" && (!AssetPaths::reference(object.mesh)||AssetPaths::extension(object.mesh)!=".obj"))throw std::runtime_error("Invalid mesh reference");
+        const auto extension=AssetPaths::extension(object.material);
+        if(object.material!="builtin/brick"&&object.material!="builtin/white"&&(!AssetPaths::reference(object.material)||(extension!=".png"&&extension!=".jpg"&&extension!=".jpeg")))throw std::runtime_error("Invalid texture reference");
+        if(!object.script.empty()&&(!AssetPaths::reference(object.script)||AssetPaths::extension(object.script)!=".lua"))throw std::runtime_error("Invalid script reference");
+        for(int axis=0;axis<3;++axis)if(!std::isfinite(object.tint[axis])||object.tint[axis]<0||object.tint[axis]>1)throw std::runtime_error("Tint must be between 0 and 1");
+        for(int axis=0;axis<2;++axis)if(!std::isfinite(object.tiling[axis])||object.tiling[axis]<0.01f||object.tiling[axis]>100)throw std::runtime_error("Texture tiling must be between 0.01 and 100");
         for (const auto& vector : {object.position, object.rotation, object.scale, object.velocity, object.acceleration})
             for (int axis=0; axis<3; ++axis)
                 if (!std::isfinite(vector[axis])) throw std::runtime_error("Transforms and physics values must be finite");
@@ -55,6 +60,7 @@ Document capture(const Core::Scene& scene) {
         object.id=entity->id(); object.name=entity->name;
         object.position=entity->position; object.rotation=entity->rotation; object.scale=entity->scale;
         object.velocity=entity->velocity; object.acceleration=entity->acceleration;
+        object.mesh=entity->meshAsset;object.material=entity->materialAsset;object.script=entity->scriptAsset;object.tint=entity->tint;object.tiling=entity->tiling;
         object.mass=entity->mass; object.gravity=entity->useGravity;
         result.objects.push_back(std::move(object));
     }
@@ -62,9 +68,10 @@ Document capture(const Core::Scene& scene) {
 }
 std::string encode(const Document& document) {
     validate(document);
-    Json root={{"format","fersa-scene"},{"version",1},{"objects",Json::array()}};
+    Json root={{"format","fersa-scene"},{"version",2},{"objects",Json::array()}};
     for (const auto& o : document.objects) {
         root["objects"].push_back({{"id",o.id},{"name",o.name},{"mesh",o.mesh},{"material",o.material},
+            {"script",o.script},{"tint",vectorJson(o.tint)},{"tiling",Json::array({o.tiling.x,o.tiling.y})},
             {"position",vectorJson(o.position)},{"rotation",vectorJson(o.rotation)},{"scale",vectorJson(o.scale)},
             {"physics",{{"mass",o.mass},{"gravity",o.gravity},{"velocity",vectorJson(o.velocity)},{"acceleration",vectorJson(o.acceleration)}}}});
     }
@@ -80,7 +87,7 @@ Document decode(const std::string& text) {
         return true;
     });
     if (!root.is_object() || root.at("format")!="fersa-scene" ||
-        !root.at("version").is_number_integer() || root.at("version")!=1)
+        !root.at("version").is_number_integer() || (root.at("version")!=1&&root.at("version")!=2))
         throw std::runtime_error("Unsupported scene format or version");
     const auto& objects=root.at("objects");
     if (!objects.is_array() || objects.size()>maxObjects) throw std::runtime_error("Invalid scene object list");
@@ -91,6 +98,13 @@ Document decode(const std::string& text) {
         if (!id.is_number_unsigned()) throw std::runtime_error("Object ID must be a positive integer");
         o.id=id.get<Core::EntityId>(); o.name=entry.at("name").get<std::string>();
         o.mesh=entry.at("mesh").get<std::string>(); o.material=entry.at("material").get<std::string>();
+        if(root.at("version")==1) {
+            if(o.mesh!="models/cube.obj"||o.material!="builtin/brick")throw std::runtime_error("Unsupported version 1 asset");
+        } else {
+            o.script=entry.at("script").get<std::string>();o.tint=vectorFrom(entry.at("tint"));
+            const auto& tiling=entry.at("tiling");if(!tiling.is_array()||tiling.size()!=2)throw std::runtime_error("Invalid texture tiling");
+            o.tiling={number(tiling[0]),number(tiling[1])};
+        }
         o.position=vectorFrom(entry.at("position")); o.rotation=vectorFrom(entry.at("rotation")); o.scale=vectorFrom(entry.at("scale"));
         const auto& physics=entry.at("physics");
         o.mass=number(physics.at("mass")); o.gravity=physics.at("gravity").get<bool>();
