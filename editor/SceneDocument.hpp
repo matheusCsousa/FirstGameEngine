@@ -5,12 +5,15 @@
 #include <vector>
 
 namespace EditorFiles {
-// Version 1 supports the editor's cube/brick asset preset. References are portable, not GPU handles.
+// Version 2 stores portable project asset references. Version 1 remains readable.
 struct Object {
     Core::EntityId id = 0;
     std::string name;
     std::string mesh = "models/cube.obj";
     std::string material = "builtin/brick";
+    std::string script;
+    glm::vec3 tint{1,1,1};
+    glm::vec2 tiling{1,1};
     glm::vec3 position{}, rotation{}, scale{1,1,1}, velocity{}, acceleration{};
     float mass = 0;
     bool gravity = false;

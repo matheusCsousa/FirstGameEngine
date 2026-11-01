@@ -40,6 +40,10 @@ public:
     EntityId id() const { return m_id; }
     std::string name = "Entity";
 
+    std::string meshAsset="models/cube.obj", materialAsset="builtin/brick", scriptAsset;
+    glm::vec3 tint{1,1,1};
+    glm::vec2 tiling{1,1};
+    void setTexture(std::shared_ptr<Core::Render::Texture> texture) { m_textures.clear(); if(texture)m_textures.push_back(std::move(texture)); }
     glm::vec3 position{};
     glm::vec3 rotation{};
     glm::vec3 scale{1.0f, 1.0f, 1.0f};

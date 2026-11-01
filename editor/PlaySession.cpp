@@ -3,13 +3,14 @@
 #include <algorithm>
 #include <cmath>
 
-void PlaySession::start(const Core::Scene& authored, std::unique_ptr<Core::Graphics::Camera> camera) {
+void PlaySession::start(const Core::Scene& authored, std::unique_ptr<Core::Graphics::Camera> camera,const std::filesystem::path& projectRoot) {
     if (runtime) return;
     auto copy=authored.clone(std::move(camera));
-    runtime=std::move(copy); accumulator=0; steps=0; paused=false;
+    runtime=std::move(copy); accumulator=0; steps=0; paused=false; scripts.start(*runtime,projectRoot);
 }
-void PlaySession::stop() { runtime.reset(); accumulator=0; steps=0; paused=false; }
+void PlaySession::stop() { scripts.stop(); runtime.reset(); accumulator=0; steps=0; paused=false; }
 void PlaySession::tick() {
+    scripts.update(*runtime,static_cast<float>(fixedStep));
     Core::Physics::PhysicsEngine::update(static_cast<float>(fixedStep),runtime->getEntities());
     ++steps;
 }

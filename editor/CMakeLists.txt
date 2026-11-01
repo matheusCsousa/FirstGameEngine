@@ -31,16 +31,41 @@ target_link_libraries(scene_document PUBLIC core nlohmann_json::nlohmann_json)
 add_library(editor_widgets STATIC TransformControls.cpp)
 target_include_directories(editor_widgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(editor_widgets PUBLIC editor_ui core)
+FetchContent_Declare(lua_source URL https://www.lua.org/ftp/lua-5.4.9.tar.gz
+  URL_HASH SHA256=2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_MakeAvailable(lua_source)
+file(GLOB lua_sources CONFIGURE_DEPENDS ${lua_source_SOURCE_DIR}/src/*.c)
+list(FILTER lua_sources EXCLUDE REGEX "/(lua|luac)\\.c$")
+add_library(editor_lua STATIC ${lua_sources})
+target_include_directories(editor_lua PUBLIC ${lua_source_SOURCE_DIR}/src)
+if(UNIX)
+  target_link_libraries(editor_lua PUBLIC m)
+endif()
+add_library(editor_scripts STATIC ScriptRuntime.cpp)
+target_include_directories(editor_scripts PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(editor_scripts PUBLIC core editor_lua)
 add_library(editor_play STATIC PlaySession.cpp)
 target_include_directories(editor_play PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(editor_play PUBLIC core)
+target_link_libraries(editor_play PUBLIC core editor_scripts)
 add_library(editor_authoring STATIC EditorMath.cpp EditHistory.cpp)
 target_include_directories(editor_authoring PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(editor_authoring PUBLIC scene_document)
+add_library(editor_assets STATIC AssetLibrary.cpp NativeFiles.cpp)
+target_include_directories(editor_assets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(editor_assets PUBLIC scene_document editor_scripts)
+if(WIN32)
+  target_link_libraries(editor_assets PRIVATE comdlg32)
+endif()
 add_executable(fersa_editor main.cpp Editor.cpp)
-target_link_libraries(fersa_editor PRIVATE core editor_ui scene_document editor_widgets editor_play editor_gizmo editor_authoring)
+target_link_libraries(fersa_editor PRIVATE core editor_ui scene_document editor_widgets editor_play editor_gizmo editor_authoring editor_assets)
 foreach(asset_directory models shader textures)
   add_custom_command(TARGET fersa_editor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/gameApp/${asset_directory}"
       "$<TARGET_FILE_DIR:fersa_editor>/assets/${asset_directory}" VERBATIM)
 endforeach()
+
+add_custom_command(TARGET fersa_editor POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:fersa_editor>/licenses"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/licenses/Lua.txt" "$<TARGET_FILE_DIR:fersa_editor>/licenses/Lua.txt"
+  VERBATIM)
