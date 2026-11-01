@@ -32,7 +32,7 @@ int main(){
     put(root/"assets"/"bad.lua","return {");a->scriptAsset="assets/bad.lua";play.start(source,camera(),root);require(!play.diagnostics().empty(),"Syntax errors must be reported");play.stop();
     a->scriptAsset="assets/missing.lua";play.start(source,camera(),root);require(!play.diagnostics().empty(),"Missing script files must be reported");play.stop();
     a->scriptAsset="assets/../../escape.lua";play.start(source,camera(),root);require(!play.diagnostics().empty(),"Scripts outside project root must be rejected");play.stop();
-    require(root.parent_path()==std::filesystem::temp_directory_path()&&root.filename().string().starts_with("fersa-lua-test-"),"Unexpected cleanup path");std::filesystem::remove_all(root);
+    require(std::filesystem::equivalent(root.parent_path(),std::filesystem::temp_directory_path())&&root.filename().string().starts_with("fersa-lua-test-"),"Unexpected cleanup path");std::filesystem::remove_all(root);
     std::cout<<"Lua callbacks, isolation, reload, pause/step, and error budgets passed\n";return 0;
  }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
 }
