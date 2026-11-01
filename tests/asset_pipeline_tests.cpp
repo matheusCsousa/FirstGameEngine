@@ -53,7 +53,7 @@ int main(){
     std::error_code linkError;std::filesystem::create_directory_symlink(source,project/"assets"/"outside",linkError);
     if(!linkError)rejected([&]{AssetPaths::resolve(project,"assets/outside/quad.obj");});
     // All files beneath this unique test-created temporary root belong to this test.
-    require(root.parent_path()==std::filesystem::temp_directory_path()&&root.filename().string().starts_with("fersa-assets-test-"),"Unexpected cleanup path");
+    require(std::filesystem::equivalent(root.parent_path(),std::filesystem::temp_directory_path())&&root.filename().string().starts_with("fersa-assets-test-"),"Unexpected cleanup path");
     std::filesystem::remove_all(root);
     std::cout<<"Import validation, portable assets, textures, scripts, and migration checks passed\n";return 0;
  }catch(const std::exception& error){std::cerr<<error.what()<<'\n';return 1;}
