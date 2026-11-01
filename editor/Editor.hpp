@@ -63,7 +63,9 @@ class Editor final : public Core::Logic {
     void fileControls();
     void resizeViewport(int w, int h);
     void releaseNavigation();
-    void createCube();
+    void drawCreateMenu();
+    std::string hierarchyFilter;
+    bool resetLayout=false;
 public:
     Editor(std::shared_ptr<Core::Window> window, const std::filesystem::path& assets,const std::filesystem::path& project={});
     ~Editor() override;

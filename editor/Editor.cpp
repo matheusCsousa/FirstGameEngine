@@ -1,3 +1,4 @@
+#include "BuiltinMeshes.hpp"
 #include "Editor.hpp"
 #include "TransformControls.hpp"
 #include "EditorMath.hpp"
@@ -19,6 +20,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <utility>
+#include <cstdlib>
 
 namespace {
 std::unordered_map<GLFWwindow*,Editor*> dropEditors;
@@ -52,9 +54,9 @@ void defaultLayout(ImGuiID dock, ImVec2 size) {
     ImGui::DockBuilderAddNode(dock, ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(dock, size);
     auto center = dock;
-    auto left = ImGui::DockBuilderSplitNode(center, ImGuiDir_Left, 0.21f, nullptr, &center);
-    auto right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.29f, nullptr, &center);
-    auto bottom=ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,0.30f,nullptr,&center);
+    auto left = ImGui::DockBuilderSplitNode(center, ImGuiDir_Left, 0.19f, nullptr, &center);
+    auto right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.27f, nullptr, &center);
+    auto bottom=ImGui::DockBuilderSplitNode(left,ImGuiDir_Down,0.46f,nullptr,&left);
     ImGui::DockBuilderDockWindow("Assets",bottom);
     ImGui::DockBuilderDockWindow("Hierarchy", left);
     ImGui::DockBuilderDockWindow("Inspector", right);
@@ -86,10 +88,29 @@ Editor::Editor(std::shared_ptr<Core::Window> target, const std::filesystem::path
     auto& io = ImGui::GetIO();
     io.IniFilename = nullptr; // Reproducible layout; layout persistence follows scene persistence.
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard;
+    // Use the installed UI font without redistributing Windows font files.
+    ImFont* uiFont=nullptr;
+#ifdef _WIN32
+    if(const char* windows=std::getenv("WINDIR")) {
+        const auto font=std::filesystem::path(windows)/"Fonts/segoeui.ttf";
+        if(std::filesystem::is_regular_file(font))uiFont=io.Fonts->AddFontFromFileTTF(font.string().c_str(),15.0f);
+    }
+#endif
+    if(!uiFont){ImFontConfig font;font.SizePixels=15;io.Fonts->AddFontDefault(&font);}
     ImGui::StyleColorsDark();
     auto& style = ImGui::GetStyle();
-    style.WindowPadding = {14,14}; style.FramePadding = {8,6}; style.ItemSpacing = {8,10};
-    style.FrameRounding = 4; style.GrabRounding = 4;
+    style.WindowPadding = {10,10}; style.FramePadding = {7,5}; style.ItemSpacing = {7,7};
+    style.FrameRounding = 3; style.GrabRounding = 3; style.TabRounding=3;
+    style.WindowBorderSize=0; style.DockingSeparatorSize=5;
+    auto& c=style.Colors;
+    c[ImGuiCol_WindowBg]={0.14f,0.16f,0.20f,1};
+    c[ImGuiCol_ChildBg]={0.12f,0.14f,0.18f,1};
+    c[ImGuiCol_PopupBg]={0.16f,0.18f,0.23f,1};
+    c[ImGuiCol_FrameBg]={0.09f,0.11f,0.15f,1};
+    c[ImGuiCol_TitleBgActive]=c[ImGuiCol_TabSelected]={0.20f,0.25f,0.33f,1};
+    c[ImGuiCol_Header]=c[ImGuiCol_Button]={0.22f,0.29f,0.39f,1};
+    c[ImGuiCol_HeaderHovered]=c[ImGuiCol_ButtonHovered]={0.28f,0.40f,0.56f,1};
+    c[ImGuiCol_CheckMark]=c[ImGuiCol_SliderGrab]=c[ImGuiCol_SeparatorHovered]={0.48f,0.73f,1,1};
     if (!ImGui_ImplGlfw_InitForOpenGL(window->getWindow(), true)) {
         ImGui::DestroyContext(); throw std::runtime_error("Editor GLFW backend failed");
     }
@@ -138,13 +159,19 @@ void Editor::resizeViewport(int w, int h) {
     if (status != GL_FRAMEBUFFER_COMPLETE) throw std::runtime_error("Editor viewport framebuffer incomplete");
     width = w; height = h;
 }
-void Editor::createCube() {
-    flushHistory();
-    auto* cube = scene->createEntity(cubeMesh, cubeShader);
-    cube->name = "Cube"; cube->position = {0,1,0};
-    cube->setLocalAABB(cubeBounds); cube->addTexture(cubeTexture);
-    selected = cube->id();
-    dirty = true;
+void Editor::drawCreateMenu() {
+    if (ImGui::Button("+ Add object")) ImGui::OpenPopup("Create object");
+    if (ImGui::BeginPopup("Create object")) {
+        ImGui::SeparatorText("PRIMITIVES");
+        for(const auto& shape:BuiltinMeshes::shapes) {
+            if(ImGui::MenuItem(shape.name)) {
+                try { createModel(shape.reference); }
+                catch(const std::exception& error) { status=error.what(); }
+            }
+        }
+        ImGui::Separator();ImGui::TextDisabled("Or import an OBJ in Assets");
+        ImGui::EndPopup();
+    }
 }
 void Editor::startPlay() {
     if (play.isPlaying()) return;
@@ -173,15 +200,18 @@ void Editor::onRender() {
     fileControls();
     auto* viewport = ImGui::GetMainViewport();
     auto dock = ImGui::GetID("FersaDock");
+    if(resetLayout){ImGui::DockBuilderRemoveNode(dock);resetLayout=false;}
     defaultLayout(dock, viewport->WorkSize);
     ImGui::DockSpaceOverViewport(dock, viewport);
     ImGui::Begin("Hierarchy");
     ImGui::TextWrapped("%s%s", currentPath.empty() ? "Untitled scene" : currentPath.filename().string().c_str(), dirty ? " *" : "");
     ImGui::BeginDisabled(play.isPlaying());
-    if (ImGui::Button("+ Cube")) createCube();
+    drawCreateMenu();
     ImGui::EndDisabled();
+    ImGui::InputTextWithHint("##SceneFilter","Filter objects...",&hierarchyFilter);
     ImGui::Separator();
     for (auto& entity : displayedScene().getEntities()) {
+        if(!hierarchyFilter.empty() && entity->name.find(hierarchyFilter)==std::string::npos)continue;
         ImGui::PushID(std::to_string(entity->id()).c_str());
         if (ImGui::Selectable((entity->name.empty() ? "(unnamed)" : entity->name.c_str()), selected == entity->id())) selected = entity->id();
         ImGui::PopID();
@@ -372,6 +402,10 @@ void Editor::fileControls() {
             if(ImGui::MenuItem("Redo","Ctrl+Y / Ctrl+Shift+Z",false,!busy && !play.isPlaying() && history.canRedo())) restoreHistory(true);
             ImGui::EndMenu();
         }
+        if(ImGui::BeginMenu("View")) {
+            if(ImGui::MenuItem("Reset workspace layout"))resetLayout=true;
+            ImGui::EndMenu();
+        }
         ImGui::BeginDisabled(busy);
         if (!play.isPlaying()) {
             if (ImGui::Button("Play")) startPlay();
@@ -538,8 +572,22 @@ void Editor::createModel(const std::string& reference){
     if(play.isPlaying())return;
     auto loaded=assets->mesh(reference);auto texture=assets->texture("builtin/white");auto shader=assets->shader();flushHistory();
     auto* entity=scene->createEntity(loaded.mesh,shader);entity->meshAsset=reference;entity->materialAsset="builtin/white";
-    entity->name=AssetPaths::text(AssetPaths::path(reference).stem());entity->setLocalAABB(loaded.bounds);entity->setTexture(texture);
-    selected=entity->id();dirty=true;frameSelected();
+    entity->name=AssetPaths::text(AssetPaths::path(reference).stem());
+    auto base=entity->name;int suffix=2;
+    auto exists=[&]{for(const auto& other:scene->getEntities())if(other->id()!=entity->id() && other->name==entity->name)return true;return false;};
+    while(exists())entity->name=base+" "+std::to_string(suffix++);
+    const auto inverseView=glm::inverse(scene->getCamera()->calcViewMatrix());
+    const auto spawnCenter=scene->getCamera()->getPosition()-glm::vec3(inverseView[2])*4.0f;
+    entity->position=spawnCenter;
+    // Fill nearby view-plane slots so repeated additions remain individually selectable.
+    for(int slot=0;slot<10000;++slot) {
+        const int column=slot%7;const int offset=column==0?0:((column+1)/2)*(column%2?1:-1);
+        entity->position=spawnCenter+glm::vec3(inverseView[0])*(offset*1.5f)+glm::vec3(inverseView[1])*(slot/7*1.5f);
+        bool occupied=false;for(const auto& other:scene->getEntities())if(other->id()!=entity->id() && glm::distance(other->position,entity->position)<1.25f){occupied=true;break;}
+        if(!occupied)break;
+    }
+    entity->setLocalAABB(loaded.bounds);entity->setTexture(texture);
+    selected=entity->id();dirty=true;status="Created "+entity->name+" in front of the camera. F to frame.";
 }
 void Editor::frameSelected(){if(auto* entity=displayedScene().findEntity(selected))static_cast<EditorCamera*>(displayedScene().getCamera())->focus(entity->getWorldAABB());}
 void Editor::editScript(const std::string& reference){
@@ -585,11 +633,12 @@ void Editor::drawAssets(){
     ImGui::SameLine();
 #endif
     if(ImGui::Button("Import path...")){showImport=true;importPath.clear();}
-    ImGui::SameLine();if(ImGui::Button("New script"))try{assetSelected=assets->createScript();refreshAssets();editScript(assetSelected);}catch(const std::exception& error){assetMessage=error.what();}
+    if(ImGui::Button("New script"))try{assetSelected=assets->createScript();refreshAssets();editScript(assetSelected);}catch(const std::exception& error){assetMessage=error.what();}
     ImGui::SameLine();if(ImGui::Button("Rescan"))refreshAssets();
-    ImGui::SameLine();ImGui::SetNextItemWidth(140);ImGui::InputTextWithHint("##AssetFilter","Find asset...",&assetFilter);
-    if(ImGui::BeginTable("AssetBrowser",2,ImGuiTableFlags_Resizable|ImGuiTableFlags_BordersInnerV)){
-        ImGui::TableSetupColumn("Files",ImGuiTableColumnFlags_WidthStretch,2);ImGui::TableSetupColumn("Selected",ImGuiTableColumnFlags_WidthStretch,1);
+    ImGui::SetNextItemWidth(-1);ImGui::InputTextWithHint("##AssetFilter","Find asset...",&assetFilter);
+    const bool wide=ImGui::GetContentRegionAvail().x>420;
+    if(ImGui::BeginTable("AssetBrowser",wide?2:1,ImGuiTableFlags_Resizable|ImGuiTableFlags_BordersInnerV)){
+        ImGui::TableSetupColumn("Files",ImGuiTableColumnFlags_WidthStretch,2);if(wide)ImGui::TableSetupColumn("Selected",ImGuiTableColumnFlags_WidthStretch,1);
         ImGui::TableNextRow();ImGui::TableNextColumn();
         for(const auto& entry:assetEntries)if(assetFilter.empty()||entry.name.find(assetFilter)!=std::string::npos){
             const auto label=std::string(entry.kind==AssetKind::Model?"[OBJ] ":entry.kind==AssetKind::Texture?"[IMG] ":"[LUA] ")+entry.name;
@@ -597,7 +646,7 @@ void Editor::drawAssets(){
             if(ImGui::BeginDragDropSource()){ImGui::SetDragDropPayload("FERSA_ASSET",entry.reference.c_str(),entry.reference.size()+1);ImGui::TextUnformatted(entry.name.c_str());ImGui::EndDragDropSource();}
         }
         if(assetEntries.empty())ImGui::TextWrapped("Drop OBJ, PNG/JPEG, or Lua files from your file manager into this window.");
-        ImGui::TableNextColumn();
+        if(wide)ImGui::TableNextColumn();else{ImGui::TableNextRow();ImGui::TableNextColumn();ImGui::Separator();}
         if(!assetSelected.empty())try{
             const auto type=AssetLibrary::kind(assetSelected);ImGui::TextWrapped("%s",AssetPaths::text(AssetPaths::path(assetSelected).filename()).c_str());
             if(type==AssetKind::Model){if(ImGui::Button("Create object"))createModel(assetSelected);}

@@ -1,4 +1,5 @@
 #include "AssetLibrary.hpp"
+#include "BuiltinMeshes.hpp"
 #include "ScriptRuntime.hpp"
 #include "../core/AssetManager/ObjLoader.hpp"
 #include <nlohmann/json.hpp>
@@ -11,6 +12,20 @@ template<class F>void rejected(F function){bool failed=false;try{function();}cat
 void put(const std::filesystem::path& path,const std::string& value){std::ofstream file(path,std::ios::binary);file<<value;}
 int main(){
  try{
+    for(const auto& shape:BuiltinMeshes::shapes) {
+        auto primitive=Core::readOBJ(std::filesystem::path(FERSA_TEST_ASSETS)/shape.reference);
+        require(!primitive.indices.empty(),"Built-in primitive must contain faces");
+        for(size_t i=0;i<primitive.vertices.size();i+=33) {
+            glm::vec3 a(primitive.vertices[i],primitive.vertices[i+1],primitive.vertices[i+2]);
+            glm::vec3 b(primitive.vertices[i+11],primitive.vertices[i+12],primitive.vertices[i+13]);
+            glm::vec3 c(primitive.vertices[i+22],primitive.vertices[i+23],primitive.vertices[i+24]);
+            require(glm::length(glm::cross(b-a,c-a))>1e-8f,"Primitive has a degenerate triangle");
+            glm::vec3 normal(primitive.vertices[i+3],primitive.vertices[i+4],primitive.vertices[i+5]);
+            require(glm::dot(glm::cross(b-a,c-a),normal)>0,"Primitive winding must match outward normals");
+        }
+        EditorFiles::Document doc;EditorFiles::Object object;object.id=1;object.mesh=shape.reference;doc.objects.push_back(object);
+        require(EditorFiles::decode(EditorFiles::encode(doc)).objects[0].mesh==shape.reference,"Primitive must survive scene save/load");
+    }
     const auto root=std::filesystem::temp_directory_path()/("fersa-assets-test-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     std::filesystem::create_directories(root/"source");std::filesystem::create_directories(root/"project");
     const auto source=root/"source";const auto project=root/"project";

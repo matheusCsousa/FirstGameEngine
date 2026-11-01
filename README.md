@@ -347,3 +347,25 @@ int main()
     game.run();
 }
 ```
+
+### Portable preview package
+
+The editor now includes seven primitives in **+ Add object**: cube, vertical
+square, ground plane, sphere, cylinder, cone, and capsule (bean). They spawn
+four units in front of the camera with unique names. Undo/redo and scene
+files preserve their mesh references. Curved shapes still use AABB physics.
+
+The compact blue-gray layout places Hierarchy and Assets on the left,
+the 3D viewport in the center, and Inspector on the right. Panels remain dockable.
+
+To create a portable package after building:
+
+```sh
+cpack --config build/CPackConfig.cmake -C Release -B dist
+```
+
+Use a Release build when distributing. Extract the entire ZIP and run
+`fersa_editor.exe`; assets must stay beside it. The Windows preview package
+workflow builds an x64 Release ZIP for PRs, version tags, or manual runs.
+Download it from the workflow's Artifacts section. This does not automatically
+publish a GitHub Release. See RELEASE-README.txt for requirements and controls.
