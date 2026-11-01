@@ -11,6 +11,8 @@ uniform sampler2D tex0;
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 uniform vec3 viewPos;
+uniform vec3 materialTint;
+uniform vec3 textureTiling;
 
 void main()
 {
@@ -33,7 +35,8 @@ void main()
     
     // Combine
     vec3 result = (ambient + diffuse + specular) * color;
-    vec4 texColor = texture(tex0, tex);
+    vec4 texColor = texture(tex0, tex * textureTiling.xy);
     
-    FragColor = vec4(result, 1.0) * texColor;
+    if(texColor.a<0.1)discard;
+    FragColor = vec4(result * materialTint, 1.0) * texColor;
 }

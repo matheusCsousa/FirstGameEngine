@@ -22,7 +22,7 @@ int main() {
         require(loaded.objects[1].id==b.id,"Large IDs lost precision");
         require(decode(encode(Document{})).objects.empty(),"Empty scenes must round trip");
         auto json=nlohmann::json::parse(text);
-        auto bad=json; bad["version"]=2; rejected([&]{decode(bad.dump());});
+        auto bad=json; bad["version"]=3; rejected([&]{decode(bad.dump());});
         bad=json; bad["objects"][1]["id"]=42; rejected([&]{decode(bad.dump());});
         bad=json; bad["objects"][0]["id"]=-1; rejected([&]{decode(bad.dump());});
         bad=json; bad["objects"][0]["id"]=0; rejected([&]{decode(bad.dump());});

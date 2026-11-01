@@ -9,6 +9,8 @@
 #include <EBO.hpp>
 #include <Shader.hpp>
 #include <Mesh.hpp>
+#include <Texture.hpp>
+#include <array>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -63,6 +65,18 @@ public:
         require(vbo.ID == 0 && ebo.ID == 0 && vao.ID == 0, "Explicit deletion must clear ownership");
         require(!glIsBuffer(vboId) && !glIsBuffer(eboId) && !glIsVertexArray(vaoId), "GPU objects remained allocated");
         const auto assets = std::filesystem::path(FERSA_TEST_ASSETS);
+        {
+            glPixelStorei(GL_UNPACK_ALIGNMENT,8);
+            const auto fixtures=std::filesystem::path(FERSA_TEST_FIXTURES);
+            Core::Render::Texture rgb((fixtures/"rgb-odd.png").string().c_str(),"diffuse",0);
+            GLint alignment;glGetIntegerv(GL_UNPACK_ALIGNMENT,&alignment);require(alignment==8,"Texture upload must restore pixel alignment");
+            rgb.bind();std::array<unsigned char,12> pixels{};glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE,pixels.data());
+            require(pixels[0]==255&&pixels[1]==0&&pixels[3]==255&&pixels[5]==255&&pixels[10]==255,"Odd-width RGB texture upload is incorrect");
+            Core::Render::Texture gray((fixtures/"gray-alpha.png").string().c_str(),"diffuse",0);gray.bind();
+            std::array<unsigned char,4> ga{};glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE,ga.data());
+            require(ga[0]==96&&ga[1]==96&&ga[2]==96&&ga[3]==128,"Two-channel texture must decode as grayscale plus alpha");
+            glPixelStorei(GL_UNPACK_ALIGNMENT,4);
+        }
         Core::Render::Shader shader((assets / "shader/shader.vert").string().c_str(),
                                     (assets / "shader/shader.frag").string().c_str());
         GLint linked = GL_FALSE;

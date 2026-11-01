@@ -1,6 +1,8 @@
 #include "Editor.hpp"
 #include "TransformControls.hpp"
 #include "EditorMath.hpp"
+#include "NativeFiles.hpp"
+#include <unordered_map>
 
 #include <glm/gtc/type_ptr.hpp>
 #include "../core/Input/Input.hpp"
@@ -19,10 +21,16 @@
 #include <utility>
 
 namespace {
+std::unordered_map<GLFWwindow*,Editor*> dropEditors;
 class EditorCamera final : public Core::Graphics::Camera {
 public:
     EditorCamera() : Camera({6,4,8}, {0,1,0}, 55, 0.1f, 500) {
         yaw = -127; pitch = -22; updateCameraVectors();
+    }
+    void focus(const Core::Collision::AABB& bounds) {
+        const auto center=(bounds.min+bounds.max)*0.5f;
+        const float radius=std::max(0.1f,glm::length(bounds.max-bounds.min)*0.5f);
+        position=center-front*(radius*2.8f);nearPlane=std::max(0.01f,radius/1000);farPlane=std::max(500.0f,radius*20);
     }
     void navigate(float dt, ImVec2 delta) {
         yaw += delta.x * 0.18f;
@@ -46,6 +54,8 @@ void defaultLayout(ImGuiID dock, ImVec2 size) {
     auto center = dock;
     auto left = ImGui::DockBuilderSplitNode(center, ImGuiDir_Left, 0.21f, nullptr, &center);
     auto right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.29f, nullptr, &center);
+    auto bottom=ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,0.30f,nullptr,&center);
+    ImGui::DockBuilderDockWindow("Assets",bottom);
     ImGui::DockBuilderDockWindow("Hierarchy", left);
     ImGui::DockBuilderDockWindow("Inspector", right);
     ImGui::DockBuilderDockWindow("Scene", center);
@@ -53,15 +63,15 @@ void defaultLayout(ImGuiID dock, ImVec2 size) {
 }
 }
 
-Editor::Editor(std::shared_ptr<Core::Window> target, const std::filesystem::path& assets) : window(std::move(target)) {
+Editor::Editor(std::shared_ptr<Core::Window> target, const std::filesystem::path& assetRoot,const std::filesystem::path& project) : window(std::move(target)) {
     scene = std::make_unique<Core::Scene>(std::make_unique<EditorCamera>());
-    auto am = scene->getAssetManager();
-    Core::Collision::AABB bounds;
-    auto mesh = am->loadMeshFromOBJ("cube", (assets/"models/cube.obj").string(), bounds);
-    auto shader = am->loadShader("surface", (assets/"shader/shader.vert").string().c_str(), (assets/"shader/shader.frag").string().c_str());
-    auto texture = am->loadTexture("brick", (assets/"textures/brick.jpg").string().c_str(), "diffuse", 0);
-    texture->texUnit(*shader, "tex0", 0);
-    cubeMesh = mesh; cubeShader = shader; cubeTexture = texture; cubeBounds = bounds;
+    const auto projectRoot=project.empty()?std::filesystem::absolute(assetRoot).parent_path()/"project":std::filesystem::absolute(project);
+    std::filesystem::create_directories(projectRoot);
+    assets=std::make_unique<AssetLibrary>(assetRoot,projectRoot);
+    const auto loaded=assets->mesh("models/cube.obj");
+    auto mesh=loaded.mesh;const auto bounds=loaded.bounds;
+    auto shader=assets->shader();auto texture=assets->texture("builtin/brick");
+    cubeMesh=mesh;cubeShader=shader;cubeTexture=texture;cubeBounds=bounds;
     auto cube = scene->createEntity(mesh, shader);
     cube->name = "Cube"; cube->position = {0,1,0}; cube->setLocalAABB(bounds); cube->addTexture(texture);
     cube->mass=1; cube->useGravity=true;
@@ -87,12 +97,20 @@ Editor::Editor(std::shared_ptr<Core::Window> target, const std::filesystem::path
         ImGui_ImplGlfw_Shutdown(); ImGui::DestroyContext();
         throw std::runtime_error("Editor OpenGL backend failed");
     }
+    dropEditors[window->getWindow()]=this;
+    previousDrop=glfwSetDropCallback(window->getWindow(),[](GLFWwindow* native,int count,const char** paths){
+        auto found=dropEditors.find(native);if(found==dropEditors.end())return;
+        for(int i=0;i<count;++i)found->second->pendingImports.push_back(AssetPaths::path(paths[i]));
+    });
+    refreshAssets();
 }
 Editor::~Editor() {
+    glfwSetDropCallback(window->getWindow(),previousDrop);dropEditors.erase(window->getWindow());
     releaseNavigation();
     glDeleteFramebuffers(1, &framebuffer); glDeleteTextures(1, &color); glDeleteRenderbuffers(1, &depth);
     play.stop();
     scene.reset();
+    assets.reset();
     ImGui_ImplOpenGL3_Shutdown(); ImGui_ImplGlfw_Shutdown(); ImGui::DestroyContext();
 }
 void Editor::releaseNavigation() {
@@ -133,8 +151,8 @@ void Editor::startPlay() {
     flushHistory();
     releaseNavigation();
     try {
-        play.start(*scene,std::make_unique<EditorCamera>(*static_cast<EditorCamera*>(scene->getCamera())));
-        status="Physics preview: edits and saving are disabled. Stop restores the authored scene.";
+        play.start(*scene,std::make_unique<EditorCamera>(*static_cast<EditorCamera*>(scene->getCamera())),assets->root());
+        status="Play: scripts and physics run on a scene copy. Stop restores authored data.";
     } catch (const std::exception& error) { status="Cannot start preview: "+std::string(error.what()); }
 }
 void Editor::stopPlay() {
@@ -151,6 +169,7 @@ void Editor::onRender() {
     editFinished=false;
     if (navigating && (!ImGui::IsMouseDown(ImGuiMouseButton_Right) ||
         !glfwGetWindowAttrib(window->getWindow(), GLFW_FOCUSED) || ImGui::IsKeyPressed(ImGuiKey_Escape))) releaseNavigation();
+    if(!pendingImports.empty()){auto files=std::move(pendingImports);pendingImports.clear();importAssets(files);}
     fileControls();
     auto* viewport = ImGui::GetMainViewport();
     auto dock = ImGui::GetID("FersaDock");
@@ -190,6 +209,7 @@ void Editor::onRender() {
         editFinished |= ImGui::IsItemDeactivatedAfterEdit();
         ImGui::TextWrapped("Drag values horizontally, or Ctrl+click to type. Axes: X / Y / Z.");
         if (ImGui::Button("Reset transform")) { flushHistory(); entity->position={}; entity->rotation={}; entity->scale={1,1,1}; dirty=true; }
+        drawMaterialAndScript(*entity);
         ImGui::SeparatorText("Physics");
         const float previousMass=entity->mass;
         if (ImGui::DragFloat("Mass (kg)",&entity->mass,0.1f,0,1000000,"%.2f",ImGuiSliderFlags_AlwaysClamp)) {
@@ -212,6 +232,7 @@ void Editor::onRender() {
         ImGui::EndDisabled();
     } else { selected = 0; ImGui::TextWrapped("Select an object in the hierarchy to edit its transform."); }
     ImGui::End();
+    drawAssets();
     bool sceneVisible = ImGui::Begin("Scene");
     ImGui::BeginDisabled(play.isPlaying());
     if(ImGui::RadioButton("Move",transformTool==TransformTool::Move)) transformTool=TransformTool::Move;
@@ -223,7 +244,7 @@ void Editor::onRender() {
     if(ImGui::Checkbox("Local axes",&shownLocal))localSpace=shownLocal;
     ImGui::EndDisabled();
     ImGui::EndDisabled();
-    ImGui::TextDisabled("W/E/R: tools | RMB + WASD: fly | Click object to select");
+    ImGui::TextDisabled("W/E/R: tools | F: frame | RMB + WASD: fly");
     auto available = ImGui::GetContentRegionAvail();
     if (sceneVisible && available.x >= 1 && available.y >= 1) {
         auto& io = ImGui::GetIO();
@@ -234,6 +255,19 @@ void Editor::onRender() {
         bool started = !navigating && imageHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && !io.WantTextInput;
         if (started) { navigating = true; glfwSetInputMode(window->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED); }
         if (navigating) static_cast<EditorCamera*>(displayedScene().getCamera())->navigate(io.DeltaTime, started ? ImVec2{} : io.MouseDelta);
+        if(!play.isPlaying()&&ImGui::BeginDragDropTarget()) {
+            if(auto* payload=ImGui::AcceptDragDropPayload("FERSA_ASSET")) {
+                const auto reference=std::string(static_cast<const char*>(payload->Data));
+                try {
+                    if(AssetLibrary::kind(reference)==AssetKind::Model)createModel(reference);
+                    else {
+                        auto* camera=scene->getCamera();auto ray=EditorMath::viewportRay({io.MousePos.x,io.MousePos.y},{imageOrigin.x,imageOrigin.y},{available.x,available.y},camera->calcViewMatrix(),camera->calcProjectionMatrix(static_cast<float>(width)/height));
+                        auto target=ray?EditorMath::pick(*scene,*ray):0;assignAsset(reference,target);
+                    }
+                }catch(const std::exception& error){assetMessage=error.what();}
+            }
+            ImGui::EndDragDropTarget();
+        }
         viewportTools({imageOrigin.x,imageOrigin.y},{available.x,available.y},imageHovered);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); glViewport(0,0,width,height);
         glEnable(GL_DEPTH_TEST); glClearColor(0.10f,0.12f,0.16f,1); glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -267,6 +301,7 @@ void Editor::request(Action action) {
     else executePending();
 }
 bool Editor::onCloseRequested() {
+    if(!editingScript.empty()){scriptError="Close the script editor before exiting.";return false;}
     stopPlay();
     flushHistory();
     if (!dirty && pending==Action::None && fileMode==FileMode::None) return true;
@@ -285,14 +320,18 @@ void Editor::executePending() {
 void Editor::openFileDialog(FileMode mode) {
     releaseNavigation();
     fileMode=mode; showFile=true; fileError.clear(); replaceExisting=false;
-    pathInput=pathText(currentPath.empty() ? std::filesystem::current_path()/"scene.fersa.json" : currentPath);
+    pathInput=pathText(currentPath.empty() ? assets->root()/"scene.fersa.json" : currentPath);
 }
 bool Editor::saveTo(const std::filesystem::path& path) {
     if (play.isPlaying()) { status="Stop the preview before saving."; return false; }
     flushHistory();
     try {
         const auto resolved=std::filesystem::absolute(path).lexically_normal();
-        EditorFiles::write(resolved,EditorFiles::capture(*scene));
+        auto document=EditorFiles::capture(*scene);
+        assets->copyReferenced(document,resolved.parent_path());
+        auto newLibrary=std::make_unique<AssetLibrary>(assets->builtinRoot(),resolved.parent_path());
+        EditorFiles::write(resolved,document);
+        assets=std::move(newLibrary);refreshAssets();
         history.markSaved(EditorFiles::capture(*scene));
         currentPath=resolved; dirty=false; status="Saved "+pathText(resolved); fileError.clear(); return true;
     } catch (const std::exception& error) { fileError=error.what(); status="Save failed: "+fileError; return false; }
@@ -301,15 +340,16 @@ bool Editor::loadFrom(const std::filesystem::path& path) {
     try {
         const auto resolved=std::filesystem::absolute(path).lexically_normal();
         const auto document=EditorFiles::read(resolved);
-        auto replacement=makeScene(document,std::make_unique<EditorCamera>());
+        auto library=std::make_unique<AssetLibrary>(assets->builtinRoot(),resolved.parent_path());
+        auto replacement=makeScene(document,std::make_unique<EditorCamera>(),library.get());
         // Commit only after the entire document has loaded. Invalid files preserve the current scene.
-        scene=std::move(replacement); selected=0; currentPath=resolved; dirty=false;
+        scene=std::move(replacement); assets=std::move(library);refreshAssets(); selected=0; currentPath=resolved; dirty=false;
         history.reset(EditorFiles::capture(*scene),selected);
         status="Opened "+pathText(resolved); fileError.clear(); return true;
     } catch (const std::exception& error) { fileError=error.what(); status="Open failed: "+fileError; return false; }
 }
 void Editor::fileControls() {
-    const bool busy=pending!=Action::None || fileMode!=FileMode::None || showUnsaved;
+    const bool busy=pending!=Action::None || fileMode!=FileMode::None || showUnsaved || !editingScript.empty() || showImport || ImGui::IsPopupOpen("Import file");
     auto save=[&] {
         if (currentPath.empty()) openFileDialog(FileMode::Save);
         else saveTo(currentPath);
@@ -401,14 +441,18 @@ void Editor::fileControls() {
     glfwSetWindowTitle(window->getWindow(),title.c_str());
 }
 
-std::unique_ptr<Core::Scene> Editor::makeScene(const EditorFiles::Document& document,std::unique_ptr<Core::Graphics::Camera> camera) {
+std::unique_ptr<Core::Scene> Editor::makeScene(const EditorFiles::Document& document,std::unique_ptr<Core::Graphics::Camera> camera,AssetLibrary* library) {
+    if(!library)library=assets.get();
     auto result=std::make_unique<Core::Scene>(std::move(camera));
     for(const auto& object:document.objects) {
-        auto* entity=result->createEntity(cubeMesh,cubeShader,object.id);
+        const auto mesh=library->mesh(object.mesh);auto texture=library->texture(object.material);
+        if(!object.script.empty())library->scriptSource(object.script);
+        auto* entity=result->createEntity(mesh.mesh,library->shader(),object.id);
+        entity->meshAsset=object.mesh;entity->materialAsset=object.material;entity->scriptAsset=object.script;entity->tint=object.tint;entity->tiling=object.tiling;
         entity->name=object.name;entity->position=object.position;entity->rotation=object.rotation;entity->scale=object.scale;
         entity->velocity=object.velocity;entity->acceleration=object.acceleration;
         entity->mass=object.mass;entity->useGravity=object.gravity;
-        entity->setLocalAABB(cubeBounds);entity->addTexture(cubeTexture);
+        entity->setLocalAABB(mesh.bounds);entity->setTexture(texture);
     }
     return result;
 }
@@ -441,6 +485,7 @@ void Editor::viewportTools(glm::vec2 origin,glm::vec2 size,bool hovered) {
         if(ImGui::IsKeyPressed(ImGuiKey_W))transformTool=TransformTool::Move;
         if(ImGui::IsKeyPressed(ImGuiKey_E))transformTool=TransformTool::Rotate;
         if(ImGui::IsKeyPressed(ImGuiKey_R))transformTool=TransformTool::Scale;
+        if(ImGui::IsKeyPressed(ImGuiKey_F))frameSelected();
     }
     ImGuizmo::SetDrawlist(ImGui::GetWindowDrawList());ImGuizmo::SetRect(origin.x,origin.y,size.x,size.y);
     ImGuizmo::SetOrthographic(false);ImGuizmo::Enable(allowed);
@@ -470,5 +515,128 @@ void Editor::viewportTools(glm::vec2 origin,glm::vec2 size,bool hovered) {
             draw->AddLine(screen(a),screen(b),IM_COL32(255,198,80,255),1.5f);
         }
         draw->PopClipRect();
+    }
+}
+
+void Editor::refreshAssets(){try{assetEntries=assets->list();if(!assetSelected.empty()&&std::none_of(assetEntries.begin(),assetEntries.end(),[&](const auto& entry){return entry.reference==assetSelected;}))assetSelected.clear();}catch(const std::exception& error){assetMessage=error.what();}}
+void Editor::importAssets(const std::vector<std::filesystem::path>& files){
+    if(play.isPlaying()){assetMessage="Stop Play before importing assets.";return;}
+    std::size_t imported=0;std::string failures;
+    for(const auto& file:files)try{assetSelected=assets->importFile(file);++imported;}catch(const std::exception& error){if(failures.size()<2048)failures+=AssetPaths::text(file.filename())+": "+error.what()+"\n";}
+    refreshAssets();assetMessage="Imported "+std::to_string(imported)+" file(s). "+failures;
+}
+void Editor::assignAsset(const std::string& reference,Core::EntityId target){
+    if(play.isPlaying())return;
+    auto* entity=scene->findEntity(target);if(!entity)throw std::runtime_error("Select an object first, or drop onto one in the viewport.");
+    const auto type=AssetLibrary::kind(reference);
+    if(type==AssetKind::Texture){auto texture=assets->texture(reference);flushHistory();entity->setTexture(texture);entity->materialAsset=reference;}
+    else if(type==AssetKind::Script){assets->scriptSource(reference);flushHistory();entity->scriptAsset=reference;}
+    else throw std::runtime_error("Use Create object for a model asset.");
+    selected=target;dirty=true;assetMessage="Assigned "+reference;
+}
+void Editor::createModel(const std::string& reference){
+    if(play.isPlaying())return;
+    auto loaded=assets->mesh(reference);auto texture=assets->texture("builtin/white");auto shader=assets->shader();flushHistory();
+    auto* entity=scene->createEntity(loaded.mesh,shader);entity->meshAsset=reference;entity->materialAsset="builtin/white";
+    entity->name=AssetPaths::text(AssetPaths::path(reference).stem());entity->setLocalAABB(loaded.bounds);entity->setTexture(texture);
+    selected=entity->id();dirty=true;frameSelected();
+}
+void Editor::frameSelected(){if(auto* entity=displayedScene().findEntity(selected))static_cast<EditorCamera*>(displayedScene().getCamera())->focus(entity->getWorldAABB());}
+void Editor::editScript(const std::string& reference){
+    if(play.isPlaying())return;
+    try{scriptText=assets->scriptSource(reference);savedScriptText=scriptText;editingScript=reference;scriptError.clear();showScript=true;}
+    catch(const std::exception& error){assetMessage=error.what();}
+}
+void Editor::drawMaterialAndScript(Core::Entity& entity){
+    ImGui::SeparatorText("Material");
+    if(ImGui::BeginCombo("Texture",entity.materialAsset.c_str())){
+        for(const auto& value:{std::string("builtin/white"),std::string("builtin/brick")})if(ImGui::Selectable(value.c_str(),entity.materialAsset==value)){
+            try{auto texture=assets->texture(value);flushHistory();entity.setTexture(texture);entity.materialAsset=value;dirty=true;}catch(const std::exception& error){assetMessage=error.what();}
+        }
+        for(const auto& entry:assetEntries)if(entry.kind==AssetKind::Texture)if(ImGui::Selectable(entry.name.c_str(),entity.materialAsset==entry.reference))try{assignAsset(entry.reference,entity.id());}catch(const std::exception& error){assetMessage=error.what();}
+        ImGui::EndCombo();
+    }
+    auto oldTint=entity.tint;
+    if(ImGui::ColorEdit3("Tint",&entity.tint.x)){
+        for(int i=0;i<3;++i)entity.tint[i]=std::isfinite(entity.tint[i])?std::clamp(entity.tint[i],0.0f,1.0f):oldTint[i];dirty|=entity.tint!=oldTint;
+    }
+    editFinished|=ImGui::IsItemDeactivatedAfterEdit();
+    auto previous=entity.tiling;
+    if(ImGui::DragFloat2("UV tiling",&entity.tiling.x,0.05f,0.01f,100,"%.2f",ImGuiSliderFlags_AlwaysClamp)){
+        for(int i=0;i<2;++i)if(!std::isfinite(entity.tiling[i]))entity.tiling[i]=previous[i];dirty|=entity.tiling!=previous;
+    }
+    editFinished|=ImGui::IsItemDeactivatedAfterEdit();
+    if(!entity.getTextures().empty())ImGui::Image(static_cast<ImTextureID>(entity.getTextures()[0]->ID),{64,64},{0,1},{1,0});
+    ImGui::SeparatorText("Script");
+    if(ImGui::BeginCombo("Lua script",entity.scriptAsset.empty()?"None":entity.scriptAsset.c_str())){
+        if(ImGui::Selectable("None",entity.scriptAsset.empty())){flushHistory();entity.scriptAsset.clear();dirty=true;}
+        for(const auto& entry:assetEntries)if(entry.kind==AssetKind::Script)if(ImGui::Selectable(entry.name.c_str(),entity.scriptAsset==entry.reference))try{assignAsset(entry.reference,entity.id());}catch(const std::exception& error){assetMessage=error.what();}
+        ImGui::EndCombo();
+    }
+    if(ImGui::Button("New script"))try{auto reference=assets->createScript();refreshAssets();assignAsset(reference,entity.id());editScript(reference);}catch(const std::exception& error){assetMessage=error.what();}
+    if(!entity.scriptAsset.empty()){ImGui::SameLine();if(ImGui::Button("Edit script"))editScript(entity.scriptAsset);}
+    ImGui::TextWrapped("Scripts run in Play. Save script edits, then restart Play to reload them.");
+}
+void Editor::drawAssets(){
+    ImGui::Begin("Assets");
+    ImGui::BeginDisabled(play.isPlaying());
+#ifdef _WIN32
+    if(ImGui::Button("Import..."))importAssets(chooseAssetFiles(window->getWindow()));
+    ImGui::SameLine();
+#endif
+    if(ImGui::Button("Import path...")){showImport=true;importPath.clear();}
+    ImGui::SameLine();if(ImGui::Button("New script"))try{assetSelected=assets->createScript();refreshAssets();editScript(assetSelected);}catch(const std::exception& error){assetMessage=error.what();}
+    ImGui::SameLine();if(ImGui::Button("Rescan"))refreshAssets();
+    ImGui::SameLine();ImGui::SetNextItemWidth(140);ImGui::InputTextWithHint("##AssetFilter","Find asset...",&assetFilter);
+    if(ImGui::BeginTable("AssetBrowser",2,ImGuiTableFlags_Resizable|ImGuiTableFlags_BordersInnerV)){
+        ImGui::TableSetupColumn("Files",ImGuiTableColumnFlags_WidthStretch,2);ImGui::TableSetupColumn("Selected",ImGuiTableColumnFlags_WidthStretch,1);
+        ImGui::TableNextRow();ImGui::TableNextColumn();
+        for(const auto& entry:assetEntries)if(assetFilter.empty()||entry.name.find(assetFilter)!=std::string::npos){
+            const auto label=std::string(entry.kind==AssetKind::Model?"[OBJ] ":entry.kind==AssetKind::Texture?"[IMG] ":"[LUA] ")+entry.name;
+            if(ImGui::Selectable(label.c_str(),assetSelected==entry.reference))assetSelected=entry.reference;
+            if(ImGui::BeginDragDropSource()){ImGui::SetDragDropPayload("FERSA_ASSET",entry.reference.c_str(),entry.reference.size()+1);ImGui::TextUnformatted(entry.name.c_str());ImGui::EndDragDropSource();}
+        }
+        if(assetEntries.empty())ImGui::TextWrapped("Drop OBJ, PNG/JPEG, or Lua files from your file manager into this window.");
+        ImGui::TableNextColumn();
+        if(!assetSelected.empty())try{
+            const auto type=AssetLibrary::kind(assetSelected);ImGui::TextWrapped("%s",AssetPaths::text(AssetPaths::path(assetSelected).filename()).c_str());
+            if(type==AssetKind::Model){if(ImGui::Button("Create object"))createModel(assetSelected);}
+            else {ImGui::BeginDisabled(!scene->findEntity(selected));if(ImGui::Button(type==AssetKind::Texture?"Apply texture":"Attach script"))assignAsset(assetSelected,selected);ImGui::EndDisabled();}
+            if(type==AssetKind::Script&&ImGui::Button("Edit source"))editScript(assetSelected);
+            if(type==AssetKind::Texture){auto texture=assets->texture(assetSelected);ImGui::Image(static_cast<ImTextureID>(texture->ID),{48,48},{0,1},{1,0});}
+        }catch(const std::exception& error){assetMessage=error.what();}
+        ImGui::EndTable();
+    }
+    ImGui::EndDisabled();
+    ImGui::TextDisabled("Project: %s",AssetPaths::text(assets->root().filename()).c_str());
+    if(ImGui::IsItemHovered())ImGui::SetTooltip("%s",AssetPaths::text(assets->root()).c_str());
+    if(!assetMessage.empty())ImGui::TextWrapped("%s",assetMessage.c_str());
+    if(!play.diagnostics().empty()&&ImGui::CollapsingHeader("Script console",ImGuiTreeNodeFlags_DefaultOpen))for(const auto& message:play.diagnostics())ImGui::TextWrapped("%s",message.c_str());
+    ImGui::End();
+    if(showImport){ImGui::OpenPopup("Import file");showImport=false;}
+    if(ImGui::BeginPopupModal("Import file",nullptr,ImGuiWindowFlags_AlwaysAutoResize)){
+        ImGui::TextUnformatted("Choose an OBJ, PNG/JPEG, or Lua source file.");ImGui::SetNextItemWidth(600);ImGui::InputText("Path",&importPath);
+        if(ImGui::Button("Import")){importAssets({AssetPaths::path(importPath)});ImGui::CloseCurrentPopup();}ImGui::SameLine();if(ImGui::Button("Cancel"))ImGui::CloseCurrentPopup();ImGui::EndPopup();
+    }
+    if(showScript){ImGui::OpenPopup("Script editor");showScript=false;}
+    ImGui::SetNextWindowSize({800,580},ImGuiCond_Appearing);
+    if(ImGui::BeginPopupModal("Script editor",nullptr)){
+        ImGui::TextWrapped("%s%s",editingScript.c_str(),scriptText!=savedScriptText?" *":"");
+        ImGui::TextWrapped("return { on_start = function(self) ... end, on_update = function(self, dt) ... end }");
+        ImGui::InputTextMultiline("##LuaSource",&scriptText,{-1,-110},ImGuiInputTextFlags_AllowTabInput);
+        if(!scriptError.empty())ImGui::TextWrapped("%s",scriptError.c_str());
+        auto save=[&](){try{assets->saveScript(editingScript,scriptText);savedScriptText=scriptText;scriptError="Saved. Restart Play to reload.";return true;}catch(const std::exception& error){scriptError=error.what();return false;}};
+        if(ImGui::Button("Save script") || (ImGui::GetIO().KeyCtrl&&ImGui::IsKeyPressed(ImGuiKey_S,false)))save();ImGui::SameLine();
+        if(ImGui::Button("Close")){if(scriptText!=savedScriptText)ImGui::OpenPopup("Unsaved script edits");else{editingScript.clear();ImGui::CloseCurrentPopup();}}
+        if(ImGui::BeginPopupModal("Unsaved script edits",nullptr,ImGuiWindowFlags_AlwaysAutoResize)){
+            ImGui::TextUnformatted("Save script changes before closing?");
+            bool close=false;
+            if(ImGui::Button("Save and close")){if(save())close=true;}ImGui::SameLine();
+            if(ImGui::Button("Discard edits"))close=true;ImGui::SameLine();if(ImGui::Button("Cancel"))ImGui::CloseCurrentPopup();
+            if(close){editingScript.clear();scriptText=savedScriptText;ImGui::CloseCurrentPopup();}
+            ImGui::EndPopup();
+        }
+        if(editingScript.empty())ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
     }
 }

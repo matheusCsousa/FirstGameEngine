@@ -255,36 +255,61 @@ xvfb-run -a ctest --test-dir build --output-on-failure
 
 Checks cover initialization validation, multiple-window GLFW lifetime, running without application logic, bounded updates/rendering, releasing application logic with its context still current, idempotent GPU deletion, mesh index-buffer ownership, sample asset resolution from another directory, missing assets, and Linux startup without a display. Windows CI builds the engine and runs the display-independent missing-assets, scene-document, transform-control, play-session, and viewport-authoring checks; run the graphics checks locally with an OpenGL-capable driver.
 
-## Editor direction
+## Scene editor
 
-Builds now include **fersa_editor**, a separate Dear ImGui docking application:
+Builds include `fersa_editor`, a separate docking editor backed by Dear ImGui and ImGuizmo:
 
 ```sh
 # Windows multi-configuration build
 ./build/editor/Debug/fersa_editor.exe
-# Linux / Ninja single-configuration build
+# Linux / Ninja build
 ./build/editor/fersa_editor
+# Choose an initial project folder
+fersa_editor --project /path/to/project
 ```
 
-The editor opens a cube and ground scene. Select objects in Hierarchy; edit names, positions, rotations (degrees), and positive scales in Inspector. Create cubes, duplicate, reset transforms, and delete objects. The Scene panel renders to a resizing framebuffer. Hold the right mouse button over it to fly with WASD, Q/E for vertical movement, and Shift for speed. Release RMB or press Escape to release the camera.
+The initial project defaults to `project/` beside the editor's asset directory. File > New creates an empty scene in the current project. Save/Open use `.fersa.json` files; opening a scene makes its parent folder the project root. Save As copies the project's managed assets beside the new scene, including assets needed by undo history. Existing different asset files are preserved and cause a clear conflict error. Move a scene together with its `assets/` folder to move the project.
 
-Use **File > Save / Save as** (Ctrl+S / Ctrl+Shift+S) to write a scene; **Open** (Ctrl+O) restores it, and **New** (Ctrl+N) starts empty. The path dialog accepts a full path; its folder must already exist. Save as requires explicit replacement permission for an existing different file. An asterisk marks unsaved edits. New, Open, Exit, and the native close button offer Save/Discard/Cancel when needed. Failed saves keep the dirty state; failed opens preserve the current scene.
+### Import and materials
 
-Scene files use versioned JSON (`.fersa.json`) with IDs, names, transforms, asset references, and basic physics state. Version 1 supports the editor's cube/brick preset; unsupported asset references and malformed documents are rejected. Saves write a sibling temporary file before replacing the destination. See [SCENE-FORMAT.md](SCENE-FORMAT.md).
+Use **Import...** on Windows for the native multi-file picker, **Import path...** for a source path on any platform, or drop files from your file manager into the editor window. Supported formats are **OBJ**, **PNG/JPG/JPEG**, and **Lua**. Files are validated and copied into the project's asset folder; name collisions receive a suffix. Source files are kept intact. Rescan updates the browser after external changes.
 
-Drag transform fields horizontally or Ctrl+click to enter a number. Position and rotation accept negative values; scale stays between 0.01 and 1000. Physics remains paused in Edit mode. Set an object's mass above zero and enable gravity in Inspector, then press **Play** in the top bar. The initial sample already contains a falling cube and static ground. **Pause/Resume** freezes/resumes preview; **Step** advances one 1/120-second physics tick while paused. **Stop** discards the runtime copy and restores authored transforms, velocities, and camera state. The preview does not mark the document dirty or change saved files.
+Select an OBJ in Assets and press **Create object**, or drag it into the viewport. Imported models start with a plain white material. They are framed automatically; **F** frames the selected object again. OBJ supports triangle/convex-polygon faces, positive/negative indices, optional UVs, and supplied or generated normals. Materials from MTL files are not imported; use the inspector to choose a texture and tint.
 
-Object and physics editing, New/Open, and saving are disabled during preview. Close/Exit stops preview first, then protects any unsaved authored changes. You can still select objects and navigate the runtime camera. The inspector displays runtime values read-only; stop to change mass, gravity, or initial velocity.
+Apply a texture through the Material inspector, the asset's **Apply texture** button, or by dragging the image onto an object in the viewport. Material controls include tint, UV tiling, and a preview. Brick and plain-white built-ins are available. RGBA decoding handles grayscale/alpha and odd-width images consistently; very low alpha is treated as a cutout, rather than blended transparency.
 
-Preview physics uses a 120 Hz fixed timestep with at most eight catch-up ticks per frame. Large frame delays are discarded rather than causing a large simulation jump. This applies to the editor preview; the legacy runtime sample still uses its existing variable update. Collisions use the existing simple world-AABB solver, with corrected equal-penetration axis selection. Click a cube in the viewport to select it (nearest transformed cube bounds); click empty space to deselect. A gold bounds outline marks the selection. Choose **Move / Rotate / Scale** above the viewport, or use **W / E / R** while the pointer is over the viewport. Drag the colored handles to edit the object. Move and Rotate support local/world axes; Scale always uses local axes and stays positive. Tool shortcuts do not run while typing, navigating with RMB, or previewing physics. Picking and gizmos are disabled during Play; hierarchy selection remains available for inspection.
+### Object scripts
 
-**Edit > Undo/Redo** or **Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z** restores scene edits, including create/duplicate/delete, names, transforms, resets, mass, gravity, and initial velocity. A complete drag or text edit is one history action. Selection and camera movement are not undo actions. Text fields retain their own native undo while active. Undo/redo is disabled during Play. Returning to saved scene content clears the dirty marker; branching after Undo discards the old redo branch. New/Open reset history, while Save preserves it. History is session-only and keeps up to 100 snapshots within an approximate 32 MiB budget, in addition to the saved checkpoint.
+Select an object and use **New script**, or attach an imported Lua asset in the Script inspector. **Edit script** opens the in-app source editor. Save validates Lua syntax before replacing the file. Script changes reload on the next Play; source edits have their own unsaved-change prompt and are separate from scene undo. Attachments and material changes participate in scene undo/redo.
 
-Scripts and materials/assets UI remain future milestones. Picking currently uses transformed cube bounds, not arbitrary triangle meshes. Gizmos reject reflected, sheared, non-finite, or out-of-range transforms. Dock layouts reset on launch.
+```lua
+return {
+    on_start = function(self)
+        self.speed = 45
+    end,
+    on_update = function(self, dt)
+        self.rotation.y = self.rotation.y + self.speed * dt
+    end
+}
+```
 
-Dear ImGui is pinned to `v1.92.0-docking`. An offline checkout can be supplied with `-DFERSA_IMGUI_SOURCE_DIR=/path/to/imgui`; use `-DFERSA_BUILD_EDITOR=OFF` to build only the runtime/sample. `FERSA_FETCH_DEPENDENCIES=OFF` controls the graphics libraries; the editor still needs ImGui, ImGuizmo, and nlohmann/json source. ImGuizmo is pinned to commit `105e4fde45e4e74aae8973d98750820ef7aca7e2`; an offline source tree can be supplied through `FETCHCONTENT_SOURCE_DIR_IMGUIZMO`. JSON is pinned to v3.11.3; an offline source tree can be supplied with CMake's `FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON`. The editor also accepts `--assets DIRECTORY` and `--smoke-test`, and receives its own copied assets next to the executable.
+Scripts run only in Play, on the runtime scene copy, and can edit their object's position, rotation, scale, and velocity. Each object has private Lua state and persistent custom `self` fields. The asset panel's Script console displays prints/errors. See [SCRIPTING.md](SCRIPTING.md) for the API and runtime limits.
 
-Tests include stable/restored IDs, duplicate independence, deletion lookup, close cancellation, play-copy isolation, pause/resume/step, fixed-step frame-rate consistency, collision ties/ground landing, real ImGui transform drags, viewport rays and rotated-bound picking, gizmo XYZ matrix round trips, bounded undo/redo branches and saved checkpoints, scene file round trips and invalid-input handling, and a hidden editor startup/render/shutdown check. See [EDITOR-MVP.md](EDITOR-MVP.md) for the remaining authoring workflow and [ENGINE-ROADMAP.md](ENGINE-ROADMAP.md) for the original engine audit.
+### Authoring controls
+
+Select through Hierarchy or click an object's transformed bounds in the viewport. Gold outlines mark selection. Use Move/Rotate/Scale or **W/E/R**, drag gizmo handles, or edit transform fields (Ctrl+click for numeric input). Move/Rotate offer local/world axes; Scale remains local and positive. Hold **RMB + WASD** to fly, **Q/E** for vertical movement, and Shift for speed. Tool shortcuts stay out of active text fields and RMB navigation.
+
+**Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+N** save, Save As, open, or start a scene. Dirty markers and Save/Discard/Cancel protect unsaved scenes. Failed opens leave the current scene intact; failed saves preserve dirty state and prior scene data. Scene format v2 stores imported asset references, tint/tiling, scripts, IDs, transforms, and physics. Version 1 remains readable. See [SCENE-FORMAT.md](SCENE-FORMAT.md).
+
+**Edit > Undo/Redo** or **Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z** restores create/duplicate/delete, names, transforms, resets, material/script attachments, and physics edits. A complete gesture/text edit is one action. Selection/camera navigation are not actions; active text fields retain local undo. Save preserves history; New/Open reset it. History is session-only, bounded to 100 snapshots and an approximate 32 MiB budget plus the saved checkpoint. Script-file edits and asset imports are not scene-history actions.
+
+**Play/Pause/Step/Stop** uses a disposable scene copy. Lua updates and physics tick at 120 Hz, with at most eight catch-up steps per frame. Pause freezes both; Step runs one tick; Stop restores authored transforms and script state. Mass zero is static for physics; set positive mass and gravity to simulate a falling body. Scripts can directly animate static objects too. Object editing, importing, and saving are disabled during Play. The legacy runtime sample retains its original variable update timing.
+
+### Dependencies and checks
+
+ImGui is pinned to `v1.92.0-docking`, ImGuizmo to `105e4fde45e4e74aae8973d98750820ef7aca7e2`, nlohmann/json to `v3.11.3`, and Lua to `5.4.9` with a checked SHA-256. The runtime core has no editor/Lua UI dependency. Use `-DFERSA_BUILD_EDITOR=OFF` for runtime only. Offline sources can be supplied with `FERSA_IMGUI_SOURCE_DIR`, `FETCHCONTENT_SOURCE_DIR_IMGUIZMO`, `FETCHCONTENT_SOURCE_DIR_NLOHMANN_JSON`, and `FETCHCONTENT_SOURCE_DIR_LUA_SOURCE`. `FERSA_FETCH_DEPENDENCIES=OFF` controls only GLFW/GLEW/GLM.
+
+The editor accepts `--assets DIRECTORY`, `--project DIRECTORY`, and `--smoke-test`. Tests cover runtime/GL resources, image upload formats, OBJ/import validation, portable copies/conflicts, scene migration, Lua callbacks/isolation/limits, Play isolation, viewport math, transforms, and undo/redo. Linux CI uses Xvfb/Mesa for rendering; Windows CI also runs the display-independent import/script checks. General mesh picking uses transformed bounds, not individual triangles. See [EDITOR-MVP.md](EDITOR-MVP.md) for the roadmap.
 
 ---
 

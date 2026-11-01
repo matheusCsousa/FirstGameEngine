@@ -1,5 +1,6 @@
 add_library(asset_manager
   AssetManager.cpp
+  ObjLoader.cpp
 )
 
 target_include_directories(asset_manager PUBLIC

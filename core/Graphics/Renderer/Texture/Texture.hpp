@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <array>
+#include <filesystem>
 
 namespace Core::Render {
 class Shader;
@@ -12,6 +14,8 @@ public:
     unsigned int slot = 0;
 
     Texture(const char* imagePath, const std::string& texType, unsigned int slot);
+    Texture(std::array<unsigned char,4> color);
+    static void validateFile(const std::filesystem::path& path);
     ~Texture();
 
     // Prevent copying
